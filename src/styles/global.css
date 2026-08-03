@@ -1581,6 +1581,7 @@ body{
 }
 .workspace-expanded{
 	overflow:hidden;
+	zoom:1;
 }
 .workspace-shell.is-fullscreen{
 	position:fixed;
@@ -1602,7 +1603,7 @@ body{
 	min-height:0;
 }
 .workspace-shell.is-fullscreen .tool-panel{
-	height:calc(100dvh - 36px);
+	height:100%;
 	top:0;
 }
 .workspace-shell.is-fullscreen .preview-panel{

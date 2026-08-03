@@ -978,6 +978,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 				const active=!root.classList.contains('is-fullscreen');
 				root.classList.toggle('is-fullscreen',active);
 				document.body.classList.toggle('workspace-expanded',active);
+				document.documentElement.classList.toggle('workspace-expanded',active);
 				updateFullscreenButtons();
 			});
 		});
@@ -985,6 +986,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			if(event.key==='Escape'&&root.classList.contains('is-fullscreen')){
 				root.classList.remove('is-fullscreen');
 				document.body.classList.remove('workspace-expanded');
+				document.documentElement.classList.remove('workspace-expanded');
 				updateFullscreenButtons();
 			}
 		});
