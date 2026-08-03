@@ -1,0 +1,13 @@
+---
+import { Download, Expand, ScanLine } from '@lucide/astro';
+interface Props { name: string; ratio: string; }
+const { name, ratio } = Astro.props;
+---
+<header class="placement-head">
+	<div><span class="placement-status-dot"></span><span><strong>{name}</strong><small>{ratio}</small></span></div>
+	<div>
+		<button type="button" class="icon-button card-download" data-download-preview aria-label={`Download ${name} preview`} title={`Download ${name} preview`}><Download size={14} stroke-width={1.8} aria-hidden="true" /></button>
+		<button type="button" class="icon-button card-safe-toggle" aria-label={`Toggle ${name} safe zone`}><ScanLine size={14} stroke-width={1.8} aria-hidden="true" /></button>
+		<button type="button" class="icon-button card-expand" aria-label={`Expand ${name} preview`}><Expand size={14} stroke-width={1.8} aria-hidden="true" /></button>
+	</div>
+</header>

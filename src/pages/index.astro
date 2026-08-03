@@ -1,11 +1,87 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import PreviewWorkspace from '../components/PreviewWorkspace.astro';
+import AdSlot from '../components/AdSlot.astro';
+const title = 'Preview My Post — Instagram Preview & Crop Checker';
+const description = 'Upload once and preview your Instagram post in the feed, profile grid, Explore, Reels, and Stories. Catch crop, safe-zone, thumbnail, and caption issues.';
+const faqs = [
+	['Is Preview My Post free?','Yes. The preview tool is free to use, requires no login, and does not connect to an Instagram account.'],
+	['Does my image get uploaded?','No. Your selected image is decoded and analyzed locally in your browser whenever practical. The image itself is not sent to our server or analytics.'],
+	['How accurate are the previews?','They are practical estimates based on current Instagram layouts. Instagram can test or roll out changes differently across accounts, regions, devices, and experiments.'],
+	['What image files can I use?','The tool accepts JPG, PNG, and WebP files up to 15 MB and warns about extremely low resolution or unusual aspect ratios.'],
+	['What is the “Safe Everywhere” area?','It is a conservative intersection of key placement crops intended to help keep essential text, logos, and subjects visible. It is not an official Instagram specification.'],
+];
+const faqSchema = {'@context':'https://schema.org','@type':'FAQPage','mainEntity':faqs.map(([question,answer])=>({'@type':'Question','name':question,'acceptedAnswer':{'@type':'Answer','text':answer}}))};
 ---
+<Layout {title} {description}>
+	<script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+	<div data-landing-before>
+	<section class="hero">
+		<span class="eyebrow">Instagram Preview & Crop Checker</span>
+		<h1>One Upload. Every <span class="accent-text">Instagram View.</span></h1>
+		<p class="hero-copy">Preview your post in the Instagram feed, profile grid, Explore, Reels, and Stories. Catch cropping, safe-zone, thumbnail, and caption issues before publishing.</p>
+		<div class="hero-actions">
+			<button class="button button-dark" type="button" data-landing-upload>Upload Files</button>
+			<button class="button button-secondary" type="button" data-landing-example>Try an Example</button>
+		</div>
+		<ul class="hero-trust"><li>No Login Required</li><li>No Instagram Connection</li><li>Images Stay in Your Browser</li><li>Free to Use</li></ul>
+	</section>
+	<AdSlot label="Advertisement — below introduction" />
+	</div>
+	<div class="home-workspace" data-home-workspace>
+		<PreviewWorkspace />
+	</div>
+	<div data-landing-after>
+	<AdSlot label="Advertisement — below preview tool" />
 
-<Layout>
-	<Welcome />
+	<section class="content-section">
+		<div class="section-heading"><span class="eyebrow">Placement QA</span><h2>A Preview Tool Built Around What Changes</h2><p>The same creative can feel completely different when it moves from a full feed post to a small discovery thumbnail. Preview My Post puts those differences in one workspace.</p></div>
+		<div class="feature-grid">
+			<article class="feature"><span class="feature-number">01 / Compare</span><h3>Every Major View</h3><p>See feed, profile grid, Explore, Reel contexts, and Story reshare views from a single local upload.</p></article>
+			<article class="feature"><span class="feature-number">02 / Inspect</span><h3>Crop & Safe Zones</h3><p>Reveal placement boundaries, edge-risk areas, interface zones, and the shared “Safe Everywhere” region.</p></article>
+			<article class="feature"><span class="feature-number">03 / Fix</span><h3>Useful Warnings</h3><p>Get placement, impact, reasoning, and a practical next step—not just a generic pass or fail.</p></article>
+			<article class="feature"><span class="feature-number">04 / Read</span><h3>Thumbnail Clarity</h3><p>Review whether the creative still communicates when it appears at Explore and profile-grid scale.</p></article>
+			<article class="feature"><span class="feature-number">05 / Write</span><h3>Caption Fold</h3><p>Compare collapsed and expanded caption states so the opening still carries the message.</p></article>
+			<article class="feature"><span class="feature-number">06 / Private</span><h3>Browser Processing</h3><p>Use object URLs and local image decoding without login, account connection, or image analytics.</p></article>
+		</div>
+	</section>
+	<AdSlot label="Advertisement — between guides" />
+
+	<section class="content-section">
+		<div class="section-heading"><span class="eyebrow">Why It Matters</span><h2>Instagram Uses Different Windows Into the Same Image</h2></div>
+		<div class="education-grid">
+			<article><h2>Why Instagram Crops Posts Differently</h2><p>Feed posts, profile thumbnails, discovery grids, Reel covers, and Story cards serve different browsing contexts. Each surface uses its own container, so content near an edge can be comfortable in one view and clipped in another.</p><a href="/#preview-tool">Check Crops in the Preview Tool →</a></article>
+			<article><h2>Profile Grid vs. Feed</h2><p>A portrait post can use more vertical space in the feed, while its profile grid thumbnail presents a compact window. Keep essential text and faces near the visual center, then inspect the exact grid simulation.</p><a href="/instagram-grid-preview">Preview the Profile Grid →</a></article>
+			<article><h2>Reel Covers Across Placements</h2><p>A full vertical cover also appears in the Reels tab, main profile grid, and sometimes feed. Comparing all four crops is the quickest way to protect a title or logo from disappearing.</p><a href="/instagram-reel-cover-preview">Check a Reel Cover →</a></article>
+			<article><h2>How Safe Zones Work</h2><p>Safe zones are conservative design guides. They mark crop boundaries, interface-heavy edges, and a shared central region. Decorative content can extend outward; essential content should stay comfortably inside.</p><a href="/#preview-tool">Show Safe Zones in the Preview Tool →</a></article>
+		</div>
+	</section>
+	<section class="content-section">
+		<div class="section-heading"><span class="eyebrow">Quick Workflow</span><h2>How to Preview a Post Before Publishing</h2></div>
+		<div class="steps"><div><h3>Upload Once</h3><p>Drop, pick, or paste a JPG, PNG, or WebP. The browser validates and decodes it locally.</p></div><div><h3>Compare Placements</h3><p>Open All Views, toggle safe zones, move the grid tile, and inspect the smallest thumbnails.</p></div><div><h3>Review & Adjust</h3><p>Use the report to revise edge content, source resolution, visual hierarchy, and the caption opening.</p></div></div>
+	</section>
+	<section class="content-section">
+		<div class="section-heading"><span class="eyebrow">FAQ</span><h2>Questions Before You Preview</h2></div>
+		<div class="faq-list">{faqs.map(([question,answer])=><details><summary>{question}</summary><p>{answer}</p></details>)}</div>
+	</section>
+	</div>
+	<script>
+		const homeWorkspace=document.querySelector<HTMLElement>('[data-home-workspace]');
+		const landingBefore=document.querySelector<HTMLElement>('[data-landing-before]');
+		const landingAfter=document.querySelector<HTMLElement>('[data-landing-after]');
+		const workspaceInput=homeWorkspace?.querySelector<HTMLInputElement>('[data-image-input]');
+		const revealWorkspace=()=>{
+			if(!homeWorkspace)return;
+			homeWorkspace.classList.add('active');
+			landingBefore?.setAttribute('hidden','');
+			landingAfter?.setAttribute('hidden','');
+			requestAnimationFrame(()=>homeWorkspace.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
+		};
+		document.querySelector<HTMLButtonElement>('[data-landing-upload]')?.addEventListener('click',()=>workspaceInput?.click());
+		workspaceInput?.addEventListener('change',()=>{if(workspaceInput.files?.length)revealWorkspace();});
+		document.querySelector<HTMLButtonElement>('[data-landing-example]')?.addEventListener('click',()=>{
+			homeWorkspace?.querySelector<HTMLButtonElement>('[data-example]')?.click();
+			revealWorkspace();
+		});
+	</script>
 </Layout>

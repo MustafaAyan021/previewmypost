@@ -1,0 +1,8 @@
+---
+interface Props { label?: string; }
+const { label = 'Advertisement' } = Astro.props;
+---
+<aside class="ad-slot" aria-label={label} hidden>
+	<span>{label}</span>
+	<small>Reserved responsive ad area</small>
+</aside>

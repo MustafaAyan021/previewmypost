@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PreviewWorkspace from '../components/PreviewWorkspace.astro';
+import AdSlot from '../components/AdSlot.astro';
+import { landingPages, type LandingPage } from '../data/landing-pages';
+export function getStaticPaths(){ return landingPages.map(page=>({params:{tool:page.slug},props:{page}})); }
+interface Props { page: LandingPage }
+const { page } = Astro.props;
+const related = landingPages.filter(item=>item.slug!==page.slug).slice(0,5);
+const faqSchema={'@context':'https://schema.org','@type':'FAQPage','mainEntity':page.faqs.map(f=>({'@type':'Question','name':f.question,'acceptedAnswer':{'@type':'Answer','text':f.answer}}))};
+---
+<Layout title={page.title} description={page.description} canonical={`/${page.slug}`}>
+	<script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+	<section class="landing-hero"><span class="eyebrow">{page.eyebrow}</span><h1>{page.h1}</h1><p>{page.intro}</p></section>
+	<div class="landing-tool"><PreviewWorkspace initialMode={page.mode} /></div>
+	<AdSlot label="Advertisement — below tool" />
+	<section class="content-section">
+		<div class="education-grid">{page.sections.map(section=><article><h2>{section.title}</h2><p>{section.body}</p></article>)}</div>
+	</section>
+	<section class="content-section">
+		<div class="section-heading"><span class="eyebrow">Frequently Asked Questions</span><h2>About This {page.eyebrow}</h2></div>
+		<div class="faq-list">{page.faqs.map(faq=><details><summary>{faq.question}</summary><p>{faq.answer}</p></details>)}</div>
+	</section>
+	<AdSlot label="Advertisement — guide area" />
+	<section class="content-section">
+		<div class="section-heading"><span class="eyebrow">Related Tools</span><h2>Check Another Instagram Placement</h2></div>
+		<nav class="related-links" aria-label="Related Instagram preview tools">{related.map(item=><a href={`/${item.slug}`}>{item.h1}</a>)}</nav>
+	</section>
+</Layout>

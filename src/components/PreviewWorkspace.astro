@@ -1,0 +1,995 @@
+---
+import type { PreviewMode } from '../data/landing-pages';
+import PlacementHeader from './preview/PlacementHeader.astro';
+import SafeOverlay from './preview/SafeOverlay.astro';
+import {
+	Bookmark, Ellipsis, Grid3x3, Heart,
+	ImageUp, Info, MessageCircle, Minus, Music2, Play, Plus, RotateCcw,
+	Repeat2,
+	Send, ShieldCheck, Upload, X,
+	TriangleAlert,
+	Clapperboard,
+	Maximize2, Minimize2,
+	SlidersHorizontal, ListChecks,
+	AtSign, Menu, UserPlus,
+	Search,
+	Download,
+	Copy, Eraser,
+} from '@lucide/astro';
+interface Props { initialMode?: PreviewMode; compactIntro?: boolean; }
+const { initialMode = 'all' } = Astro.props;
+const tabs: { id: PreviewMode; label: string }[] = [
+	{ id:'all', label:'All Views' }, { id:'feed', label:'Feed' }, { id:'grid', label:'Profile Grid' },
+	{ id:'explore', label:'Explore' }, { id:'reels', label:'Reels' }, { id:'story', label:'Story Reshare' },
+];
+---
+<section class="workspace-shell" id="preview-tool" data-preview-workspace data-initial-mode={initialMode} aria-labelledby="workspace-title">
+	<header class="tool-intro">
+		<div>
+			<span class="eyebrow">Instagram Placement Preview</span>
+			<h2>See One Post Everywhere</h2>
+			<p>Set up your post, compare every important crop, and review issues before publishing.</p>
+		</div>
+		<div class="tool-privacy"><span aria-hidden="true"></span><strong>Private by default</strong><small>Images stay in your browser</small></div>
+	</header>
+	<div class="mobile-toolbar">
+		<button type="button" class="button button-secondary mobile-tool-action" data-open-setup aria-controls="setup-panel" aria-label="Open Post Setup"><SlidersHorizontal size={15} aria-hidden="true" /><span>Post Setup</span></button>
+		<label><span class="sr-only">Preview placement</span>
+			<select data-mobile-mode>{tabs.map((tab) => <option value={tab.id} selected={tab.id === initialMode}>{tab.label}</option>)}</select>
+		</label>
+		<button type="button" class="button button-secondary mobile-tool-action" data-open-report aria-controls="report-panel" aria-label="Open Preview Report"><ListChecks size={15} aria-hidden="true" /><span>Report</span><b data-issue-count>0</b></button>
+		<button type="button" class="icon-button fullscreen-button" data-fullscreen-toggle aria-label="Expand workspace"><Maximize2 class="enter-fullscreen-icon" size={15} aria-hidden="true" /><Minimize2 class="exit-fullscreen-icon" size={15} aria-hidden="true" /></button>
+	</div>
+
+	<div class="workspace-grid">
+		<aside class="setup-panel tool-panel" id="setup-panel" aria-labelledby="setup-title">
+			<div class="panel-heading">
+				<div><h2 id="setup-title">Post Setup</h2></div>
+				<button type="button" class="icon-button mobile-close" data-close-panels aria-label="Close Post Setup"><X size={16} aria-hidden="true" /></button>
+			</div>
+			<div class="panel-scroll">
+				<div class="upload-zone" data-drop-zone>
+					<input id="image-upload" name="image-upload" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-image-input multiple />
+					<input id="image-add" name="image-add" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-add-image-input multiple />
+					<div class="upload-icon" aria-hidden="true"><Upload size={19} stroke-width={1.7} /></div>
+					<strong data-upload-title>Drop Your Images Here</strong>
+					<span data-upload-help>JPG, PNG, or WebP · up to 10 images</span>
+					<label class="button button-dark button-small" for="image-upload">Choose Images</label>
+					<button class="text-button" type="button" data-example>Try an Example</button>
+				</div>
+				<div class="upload-status" data-upload-status aria-live="polite">
+					<span class="privacy-dot" aria-hidden="true"></span>
+					<span>Your image stays in your browser and is not uploaded to our server.</span>
+				</div>
+				<div class="image-actions" data-image-actions hidden>
+					<label class="button button-secondary button-small" for="image-upload">Replace Images</label>
+					<button class="button button-secondary button-small" type="button" data-remove-image>Remove Images</button>
+				</div>
+				<div class="carousel-strip" data-carousel-strip hidden aria-label="Uploaded carousel images"></div>
+
+				<fieldset class="field-group segmented-field">
+					<legend>Post Type</legend>
+					<label><input type="radio" name="post-type" value="post" checked /><span>Post</span></label>
+					<label><input type="radio" name="post-type" value="reel" /><span>Reel</span></label>
+					<label><input type="radio" name="post-type" value="carousel" /><span>Carousel</span></label>
+				</fieldset>
+				<fieldset class="field-group segmented-field">
+					<legend>Feed Ratio</legend>
+					<label><input type="radio" name="feed-ratio" value="square" /><span>1:1</span></label>
+					<label><input type="radio" name="feed-ratio" value="portrait" checked /><span>4:5</span></label>
+					<label><input type="radio" name="feed-ratio" value="landscape" /><span>1.91:1</span></label>
+				</fieldset>
+				<fieldset class="field-group segmented-field">
+					<legend>Preview Width</legend>
+					<label><input type="radio" name="feed-width" value="mobile" /><span>Mobile</span></label>
+					<label><input type="radio" name="feed-width" value="tablet" checked /><span>Tablet</span></label>
+					<label><input type="radio" name="feed-width" value="desktop" /><span>Desktop</span></label>
+				</fieldset>
+
+				<div class="field-row">
+					<label class="field"><span>Username</span><div class="input-prefix"><span>@</span><input name="username" data-field="username" value="studio.north" maxlength="30" autocomplete="off" spellcheck="false" /></div></label>
+					<div class="field profile-field">
+						<span>Profile Image</span>
+						<input id="profile-upload" name="profile-upload" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-profile-input />
+						<label class="avatar-upload" for="profile-upload"><span class="avatar preview-avatar" aria-hidden="true">SN</span><span>Change</span></label>
+					</div>
+				</div>
+				<label class="field"><span>Name</span><input name="display-name" data-field="name" value="Studio North" maxlength="64" autocomplete="off" /></label>
+				<label class="field"><span>Location <em>Optional</em></span><input name="location" data-field="location" value="Copenhagen, Denmark" maxlength="80" autocomplete="off" /></label>
+				<label class="field"><span>Caption <em>Preview only</em></span><textarea name="caption" data-field="caption" rows="4" maxlength="2200">Slow mornings, good type, and a little more room to think. A new collection shaped by quiet places.</textarea><small><span data-caption-count>104</span> / 2,200</small></label>
+				<div class="caption-actions">
+					<button type="button" class="text-button icon-label" data-copy-caption><Copy size={12} aria-hidden="true" />Copy Caption</button>
+					<button type="button" class="text-button icon-label" data-clear-caption><Eraser size={12} aria-hidden="true" />Clear</button>
+					<span class="sr-only" aria-live="polite" data-caption-action-status></span>
+				</div>
+				<div class="field-row">
+					<label class="field"><span>Likes</span><input type="number" name="likes" data-field="likes" value="1248" min="0" max="99999999" inputmode="numeric" autocomplete="off" /></label>
+					<label class="field"><span>Comments</span><input type="number" name="comments" data-field="comments" value="42" min="0" max="99999999" inputmode="numeric" autocomplete="off" /></label>
+				</div>
+				<div class="field-row">
+					<label class="field"><span>Post Date</span><input name="date" data-field="date" value="2 DAYS AGO" maxlength="30" autocomplete="off" /></label>
+					<label class="check-field"><input type="checkbox" data-field="verified" /><span>Verified preview</span></label>
+				</div>
+				<p class="preview-fields-note">Fictional details for visual preview only. Do not use them to impersonate another person or business.</p>
+
+				<fieldset class="field-group segmented-field">
+					<legend>Instagram Appearance</legend>
+					<label><input type="radio" name="ig-theme" value="light" checked /><span>Light</span></label>
+					<label><input type="radio" name="ig-theme" value="dark" /><span>Dark</span></label>
+				</fieldset>
+				<label class="switch-row"><span><strong>Safe Zones</strong><small>Show placement crop boundaries</small></span><input type="checkbox" data-safe-toggle /><i aria-hidden="true"></i></label>
+				<label class="switch-row"><span><strong>Safe Everywhere</strong><small>Common visible area</small></span><input type="checkbox" data-safe-everywhere /><i aria-hidden="true"></i></label>
+			</div>
+			<div class="panel-footer"><button class="text-button danger-text icon-label" type="button" data-reset><RotateCcw size={13} aria-hidden="true" />Reset Tool</button><span>Saved locally</span></div>
+		</aside>
+
+		<section class="preview-panel" aria-labelledby="workspace-title">
+			<header class="workspace-heading">
+				<div><div><h2 id="workspace-title">Your Previews</h2><p>Compare crops across Instagram placements</p></div></div>
+				<div class="workspace-actions">
+					<button type="button" class="icon-button download-all-button" data-download-all aria-label="Download all previews" title="Download all previews"><Download size={13} aria-hidden="true" /><span class="sr-only">Download All</span></button>
+					<div class="zoom-control" aria-label="Preview zoom">
+						<button type="button" aria-label="Zoom out" data-zoom-out><Minus size={13} aria-hidden="true" /></button><output data-zoom-output>100%</output><button type="button" aria-label="Zoom in" data-zoom-in><Plus size={13} aria-hidden="true" /></button>
+					</div>
+					<button type="button" class="icon-button fullscreen-button" data-fullscreen-toggle aria-label="Expand workspace"><Maximize2 class="enter-fullscreen-icon" size={14} aria-hidden="true" /><Minimize2 class="exit-fullscreen-icon" size={14} aria-hidden="true" /></button>
+				</div>
+			</header>
+			<div class="preview-tabs" role="tablist" aria-label="Instagram placements">
+				{tabs.map((tab) => <button type="button" role="tab" aria-selected={tab.id === initialMode ? 'true' : 'false'} data-mode={tab.id}>{tab.label}</button>)}
+			</div>
+			<div class="preview-notice"><Info size={13} aria-hidden="true" /> Preview based on current Instagram layouts. Instagram may test or roll out interface changes differently across accounts and devices.</div>
+			<div class="previews-canvas" data-preview-canvas>
+				<div class="empty-preview" data-empty-preview>
+					<div class="empty-orbit"><span class="empty-frame"><ImageUp size={22} aria-hidden="true" /></span><span class="empty-grid-icon"><Grid3x3 size={14} aria-hidden="true" /></span></div>
+					<h3>Your Views Will Appear Here</h3>
+					<p>Upload an image or load the example to compare every placement and run the visual QA check.</p>
+					<label class="button button-dark" for="image-upload">Choose Images</label>
+				</div>
+				<div class="preview-cards" data-preview-cards hidden>
+					<article class="placement-card feed-card" data-placement="feed">
+						<PlacementHeader name="Feed" ratio="4:5 · 1080 × 1350" />
+						<div class="card-stage">
+							<div class="ig-post" data-ig-surface>
+								<div class="ig-post-head">
+									<span class="avatar preview-avatar">SN</span>
+									<span class="ig-post-identity"><span><b data-output="username">studio.north</b><span class="verified-badge" data-verified hidden aria-label="Verified"><img src="/verified-badge.svg" alt="" width="11" height="11" /></span></span><small><Music2 size={10} aria-hidden="true" /><span data-output="location">Copenhagen, Denmark</span></small></span>
+									<span class="feed-menu-icon more-icon" aria-hidden="true"><i></i><i></i></span>
+								</div>
+								<div class="media-frame feed-media" data-feed-carousel aria-label="Post carousel" aria-roledescription="carousel">
+									<div class="feed-carousel-track" data-feed-carousel-track></div>
+									<SafeOverlay />
+									<span class="carousel-count" data-carousel-count aria-live="polite"></span>
+								</div>
+								<span class="carousel-dots" data-carousel-dots aria-hidden="true"></span>
+								<div class="ig-actions">
+									<span><Heart size={18} aria-hidden="true" /><b data-output="likes">1,248</b></span>
+									<span><MessageCircle size={18} aria-hidden="true" /><b data-output="comments">42</b></span>
+									<span><Repeat2 size={18} aria-hidden="true" /><b>16</b></span>
+									<span><Send size={18} aria-hidden="true" /></span>
+									<Bookmark size={18} aria-hidden="true" />
+								</div>
+								<div class="ig-copy"><p><b data-output="username">studio.north</b> <span data-caption-preview></span> <button type="button" data-caption-toggle>more</button></p><time data-output="date">2 DAYS AGO</time></div>
+							</div>
+						</div>
+					</article>
+
+					<article class="placement-card grid-card" data-placement="grid">
+						<PlacementHeader name="Profile Grid" ratio="3:4 portrait thumbnail" />
+						<div class="card-stage">
+							<div class="grid-shape-control" aria-label="Profile grid controls">
+								<button type="button" class="active" data-grid-shape="portrait" aria-pressed="true">Portrait 3:4</button>
+								<button type="button" data-grid-shape="square" aria-pressed="false">Square 1:1</button>
+							</div>
+							<input id="grid-cell-upload" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-grid-cell-input />
+							<div class="ig-profile-screen" data-ig-surface>
+								<header class="ig-profile-header">
+									<Plus class="profile-create-icon" size={23} aria-hidden="true" />
+									<div class="ig-profile-title"><strong data-output="username">studio.north</strong><span class="verified-badge" data-verified hidden aria-label="Verified"><img src="/verified-badge.svg" alt="" width="11" height="11" /></span></div>
+									<div class="ig-profile-header-actions"><AtSign size={22} aria-hidden="true" /><Menu size={24} aria-hidden="true" /></div>
+								</header>
+								<section class="ig-profile-overview">
+									<div class="ig-profile-avatar"><span class="avatar preview-avatar">SN</span><i aria-hidden="true">+</i></div>
+									<div class="ig-profile-name"><b data-output="name">Studio North</b></div>
+									<div class="ig-profile-stats"><span><b>128</b><small>posts</small></span><span><b>12.4K</b><small>followers</small></span><span><b>386</b><small>following</small></span></div>
+								</section>
+								<p class="ig-profile-bio">Visual ideas, considered details, and work in progress.</p>
+								<div class="ig-profile-actions"><button type="button">Edit profile</button><button type="button">Share profile</button><button type="button" aria-label="Discover people"><UserPlus size={15} aria-hidden="true" /></button></div>
+								<div class="ig-highlights">
+									<div><span><Plus size={19} aria-hidden="true" /></span><small>New</small></div>
+									<div><span class="highlight-one">01</span><small>Projects</small></div>
+									<div><span class="highlight-two">02</span><small>Studio</small></div>
+								</div>
+								<div class="ig-profile-tabs"><span class="active"><Grid3x3 size={18} aria-hidden="true" /></span><span><Repeat2 size={18} aria-hidden="true" /></span><span><Clapperboard size={18} aria-hidden="true" /></span></div>
+								<div class="profile-grid" data-profile-grid>
+									{Array.from({length:9}).map((_, i) => <div class:list={['grid-tile', `placeholder-${i+1}`, i === 4 && 'active-upload']} data-grid-position={i} tabindex={i === 4 ? -1 : 0} draggable="true" aria-label={`Move primary post to grid position ${i+1}`}>
+										{i === 4 && <><img data-preview-image alt="Uploaded post in profile grid" width="360" height="480" /><SafeOverlay /></>}
+										<button type="button" class="grid-cell-remove" data-grid-cell-remove={i} aria-label={`Remove image from grid position ${i+1}`} hidden><X size={11} aria-hidden="true" /></button>
+									</div>)}
+								</div>
+							</div>
+							<p class="micro-hint">Click an empty tile to add an image. Drag tiles to rearrange the grid.</p>
+						</div>
+					</article>
+
+					<article class="placement-card explore-card" data-placement="explore">
+						<PlacementHeader name="Explore" ratio="3:4 discovery thumbnail" />
+						<div class="card-stage">
+							<div class="ig-explore-screen" data-ig-surface>
+								<header class="ig-explore-header"><div><Search size={14} aria-hidden="true" /><span>Search with Meta AI</span></div><SlidersHorizontal size={19} aria-hidden="true" /></header>
+								<div class="ig-explore-topics" aria-label="Explore topics"><span class="active">For you</span><span class="topic-add"><Plus size={14} aria-hidden="true" /></span><span>News</span><span>Politics</span><span>Gaza</span><span>Sports</span></div>
+								<div class="explore-grid">
+									{Array.from({length:12}).map((_,i) => <div class:list={['explore-tile',`p${i+1}`,i===4&&'explore-active-upload']} data-explore-position={i} draggable={i===4 ? 'true' : 'false'} tabindex={i===4 ? -1 : 0} aria-label={i===4 ? 'Uploaded post in Explore position 5' : `Move uploaded post to Explore position ${i+1}`}>
+										{i===4 && <><img data-preview-image alt="Uploaded post in Explore thumbnail" width="360" height="480" /><SafeOverlay /><span class="explore-upload-marker">Your post</span></>}
+										<span class="explore-views"><Play size={7} fill="currentColor" aria-hidden="true" /> {['4.1M','7.9M','3.2M','4.4M','2.4M','511K','4.6M','458K','2M','807K','1.3M','936K'][i]}</span>
+									</div>)}
+								</div>
+							</div>
+							<p class="micro-hint">Click a tile or drag your post to compare its position at Explore thumbnail size.</p>
+						</div>
+					</article>
+
+					<article class="placement-card reels-card" data-placement="reels">
+						<PlacementHeader name="Reel Cover" ratio="9:16 · 1080 × 1920" />
+						<div class="card-stage reel-comparison">
+							<div class="reel-context">
+								<span><b>Full Reel</b><small>9:16 canvas</small></span>
+								<div class="reel-phone" data-ig-surface>
+									<header class="reel-app-header"><Plus size={20} aria-hidden="true" /><b>Reels <span aria-hidden="true">⌄</span></b><SlidersHorizontal size={18} aria-hidden="true" /></header>
+									<div class="media-frame reel-full">
+										<img data-preview-image alt="Uploaded image as full Reel cover" width="1080" height="1920" />
+										<SafeOverlay />
+										<div class="reel-ui">
+											<span><Heart size={19} /><small>10.6K</small></span>
+											<span><MessageCircle size={19} /><small>281</small></span>
+											<span><Repeat2 size={19} /><small>627</small></span>
+											<span><Send size={19} /><small>1,142</small></span>
+											<span><Bookmark size={19} /><small>392</small></span>
+											<span class="reel-more-lines" aria-hidden="true"><i></i><i></i></span>
+										</div>
+										<div class="reel-meta">
+											<div><span class="avatar preview-avatar">SN</span><b data-output="username">studio.north</b><button type="button">Follow</button></div>
+											<p data-reel-caption></p>
+											<small><Music2 size={10} aria-hidden="true" /> Original audio</small>
+											<span class="reel-audio-thumb"><Music2 size={10} aria-hidden="true" /></span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="reel-context">
+								<span><b>Reels Tab</b><small>420 × 654 cover</small></span>
+								<div class="media-frame reel-tab"><img data-preview-image alt="Uploaded image in Reels profile tab" width="360" height="480" /><SafeOverlay /><Clapperboard class="reel-badge" size={14} aria-hidden="true" /><span class="reel-views"><Play size={9} fill="currentColor" aria-hidden="true" /> 8.4K</span></div>
+							</div>
+							<div class="reel-context">
+								<span><b>Main Grid</b><small>3:4 profile crop</small></span>
+								<div class="media-frame reel-grid"><img data-preview-image alt="Uploaded Reel cover in main profile grid" width="360" height="360" /><SafeOverlay /><Clapperboard class="reel-badge" size={14} aria-hidden="true" /></div>
+							</div>
+							<div class="reel-context">
+								<span><b>Feed</b><small>4:5 presentation</small></span>
+								<div class="media-frame reel-feed"><img data-preview-image alt="Uploaded Reel cover in feed" width="360" height="450" /><SafeOverlay /><span class="reel-play" aria-hidden="true"><Play size={16} fill="currentColor" /></span><span class="reel-feed-label"><Clapperboard size={11} /> Reel</span></div>
+							</div>
+						</div>
+					</article>
+
+					<article class="placement-card story-card" data-placement="story">
+						<PlacementHeader name="Story Reshare" ratio="9:16 · interface zones" />
+						<div class="card-stage">
+							<div class="story-layout-control" aria-label="Story reshare layout">
+								<button type="button" class="active" data-story-layout="post" aria-pressed="true">Post Card</button>
+								<button type="button" data-story-layout="media" aria-pressed="false">Media Only</button>
+							</div>
+							<div class="story-canvas" data-story-layout-current="post">
+								<img class="story-backdrop" data-preview-image alt="" width="720" height="1280" aria-hidden="true" />
+								<div class="story-backdrop-tint" aria-hidden="true"></div>
+								<div class="story-progress"><i></i><i></i><i></i></div>
+								<div class="story-user"><span class="avatar preview-avatar">SN</span><b data-output="username">studio.north</b><span>2h</span><Ellipsis class="story-more" size={14} aria-hidden="true" /></div>
+								<div class="story-safe top">Interface-safe review zone</div>
+								<div class="story-share-group">
+									<div class="story-post">
+										<div class="story-card-head"><span class="avatar preview-avatar">SN</span><b data-output="username">studio.north</b></div>
+										<img data-preview-image alt="Uploaded post reshared to Story" width="720" height="900" />
+										<p><b data-output="username">studio.north</b> <span data-story-caption></span></p>
+									</div>
+									<div class="story-media-credit">@<b data-output="username">studio.north</b></div>
+								</div>
+								<div class="story-reply"><span>Send message…</span><Heart size={16} aria-hidden="true" /><Send size={16} aria-hidden="true" /></div>
+								<div class="story-safe bottom">Reply interface-safe review zone</div>
+								<div class="safe-everywhere-overlay" aria-hidden="true"><span>Safe Everywhere</span></div>
+							</div>
+						</div>
+					</article>
+				</div>
+			</div>
+		</section>
+
+		<aside class="report-panel tool-panel" id="report-panel" aria-labelledby="report-title">
+			<div class="panel-heading"><div><h2 id="report-title">Preview Report</h2></div><button type="button" class="icon-button mobile-close" data-close-panels aria-label="Close Preview Report"><X size={16} aria-hidden="true" /></button></div>
+			<div class="panel-scroll">
+				<div class="report-empty" data-report-empty><span class="report-ring" aria-hidden="true"><ShieldCheck size={20} /></span><h3>No Image Yet</h3><p>Upload an image to see a quick placement check.</p></div>
+				<div class="report-results" data-report-results hidden aria-live="polite">
+					<div class="overall-card" data-overall-card><span class="status-icon" data-status-icon aria-hidden="true"><TriangleAlert size={14} /></span><div><small>Quick Check</small><strong data-overall-status>Review Recommended</strong></div><b><span data-issue-count>0</span> to check</b></div>
+					<div class="metric-grid">
+						<div><span>Image Shape</span><strong data-source-ratio>—</strong></div>
+						<div><span>Resolution</span><strong data-resolution>—</strong></div>
+						<div><span>File Size</span><strong data-file-size>—</strong></div>
+						<div><span>Best Match</span><strong data-best-fit>—</strong></div>
+					</div>
+					<div class="report-section"><div class="report-section-head"><h3>What to Check</h3><span data-check-summary>0 items</span></div><div data-issues-list></div></div>
+					<div class="report-section"><h3>By Placement</h3><ul class="placement-status">
+						<li><span>Feed</span><b data-status="feed">—</b></li><li><span>Profile Grid</span><b data-status="grid">—</b></li><li><span>Explore</span><b data-status="explore">—</b></li><li><span>Reel Cover</span><b data-status="reels">—</b></li><li><span>Story Reshare</span><b data-status="story">—</b></li>
+					</ul></div>
+				</div>
+			</div>
+			<div class="panel-footer"><span>Visual estimate</span><a href="/disclaimer">Learn more</a></div>
+		</aside>
+	</div>
+	<div class="sheet-backdrop" data-sheet-backdrop hidden></div>
+	<div class="workspace-toast" data-workspace-toast role="status" aria-live="polite" hidden></div>
+</section>
+
+<script>
+	import { toBlob } from 'html-to-image';
+	import JSZip from 'jszip';
+
+	type Mode = 'all'|'feed'|'grid'|'explore'|'reels'|'story';
+	interface PreviewState {
+		mode: Mode; username:string; name:string; location:string; caption:string; likes:number; comments:number; date:string;
+		verified:boolean; igTheme:'light'|'dark'; storyLayout:'post'|'media'; feedRatio:'square'|'portrait'|'landscape'; feedWidth:'mobile'|'tablet'|'desktop'; safe:boolean; safeEverywhere:boolean; gridPosition:number; zoom:number;
+	}
+	const defaults: PreviewState = { mode:'all',username:'studio.north',name:'Studio North',location:'Copenhagen, Denmark',caption:'Slow mornings, good type, and a little more room to think. A new collection shaped by quiet places.',likes:1248,comments:42,date:'2 DAYS AGO',verified:false,igTheme:'light',storyLayout:'post',feedRatio:'portrait',feedWidth:'tablet',safe:false,safeEverywhere:false,gridPosition:4,zoom:100 };
+	const format = new Intl.NumberFormat();
+	const emit = (event:string, properties:Record<string,unknown>={}) => window.dispatchEvent(new CustomEvent('pmp:analytics',{detail:{event,...properties}}));
+
+	document.querySelectorAll<HTMLElement>('[data-preview-workspace]').forEach((root) => {
+		const state = { ...defaults };
+		const initial = root.dataset.initialMode as Mode | undefined;
+		const queryMode = new URLSearchParams(location.search).get('view') as Mode | null;
+		state.mode = queryMode || initial || 'all';
+		let objectURLs:string[] = [];
+		let carouselFiles:(File|null)[] = [];
+		let gridImageURLs:string[] = [];
+		let selectedGridCell = -1;
+		let activeImageIndex = 0;
+		let profileURL = '';
+		let captionExpanded = false;
+		const $ = <T extends Element>(selector:string) => root.querySelector<T>(selector);
+		const $$ = <T extends Element>(selector:string) => [...root.querySelectorAll<T>(selector)];
+		let toastTimer=0;
+		const notify=(message:string,tone:'info'|'error'='info')=>{
+			const toast=$<HTMLElement>('[data-workspace-toast]');
+			if(!toast)return;
+			window.clearTimeout(toastTimer);
+			toast.textContent=message;
+			toast.dataset.tone=tone;
+			toast.hidden=false;
+			requestAnimationFrame(()=>toast.classList.add('visible'));
+			toastTimer=window.setTimeout(()=>{toast.classList.remove('visible');window.setTimeout(()=>toast.hidden=true,160);},3200);
+		};
+		const save = () => {
+			try { localStorage.setItem('pmp-draft', JSON.stringify({username:state.username,name:state.name,location:state.location,caption:state.caption,likes:state.likes,comments:state.comments,date:state.date,verified:state.verified,igTheme:state.igTheme,storyLayout:state.storyLayout,feedRatio:state.feedRatio,feedWidth:state.feedWidth,mode:state.mode,safe:state.safe,safeEverywhere:state.safeEverywhere})); } catch {}
+		};
+		const applyProfileImage = (src:string) => {
+			$$<HTMLElement>('.preview-avatar').forEach(el=>{
+				el.textContent=src?'':'SN';
+				el.style.backgroundImage=src?`url("${src}")`:'';
+			});
+		};
+		const loadSaved = () => {
+			try { const saved = JSON.parse(localStorage.getItem('pmp-draft') || '{}'); Object.assign(state, saved, {mode:queryMode || initial || saved.mode || 'all'}); } catch {}
+			try { const savedProfile=localStorage.getItem('pmp-profile-image'); if(savedProfile)applyProfileImage(savedProfile); } catch {}
+		};
+		loadSaved();
+
+		const escapeCaption=(value:string)=>value.replace(/[&<>\"']/g,char=>{
+			if(char==='&')return '&amp;';
+			if(char==='<')return '&lt;';
+			if(char==='>')return '&gt;';
+			return char==='\"'?'&quot;':'&#39;';
+		});
+		const captionHTML=(value:string)=>{
+			const pattern=/([@#][a-zA-Z0-9_.]+)/g;
+			let output='',last=0;
+			for(const match of value.matchAll(pattern)){
+				const index=match.index??0;
+				output+=escapeCaption(value.slice(last,index));
+				output+='<span class=\"caption-token\">'+escapeCaption(match[0])+'</span>';
+				last=index+match[0].length;
+			}
+			return output+escapeCaption(value.slice(last));
+		};
+		const renderFields = () => {
+			$$<HTMLInputElement|HTMLTextAreaElement>('[data-field]').forEach((el) => {
+				const key = el.dataset.field as keyof PreviewState;
+				if (el instanceof HTMLInputElement && el.type === 'checkbox') el.checked = Boolean(state[key]);
+				else el.value = String(state[key] ?? '');
+			});
+			$$<HTMLElement>('[data-output="username"]').forEach(el => el.textContent = state.username || 'your.handle');
+			$$<HTMLElement>('[data-output="name"]').forEach(el => el.textContent = state.name || 'Your Name');
+			$$<HTMLElement>('[data-output="location"]').forEach(el => { el.textContent = state.location; el.toggleAttribute('hidden', !state.location); });
+			$$<HTMLElement>('[data-output="likes"]').forEach(el => el.textContent = format.format(state.likes || 0));
+			$$<HTMLElement>('[data-output="comments"]').forEach(el => el.textContent = format.format(state.comments || 0));
+			$$<HTMLElement>('[data-output="date"]').forEach(el => el.textContent = state.date || 'TODAY');
+			$$<HTMLElement>('[data-verified]').forEach(el => el.toggleAttribute('hidden', !state.verified));
+			$$<HTMLElement>('[data-caption-count]').forEach(el => el.textContent = String(state.caption.length));
+			const short = state.caption.length > 118 && !captionExpanded ? state.caption.slice(0,118).trimEnd() + '…' : state.caption;
+			$$<HTMLElement>('[data-caption-preview]').forEach(el => el.innerHTML = captionHTML(short || 'Your caption will appear here.'));
+			$$<HTMLElement>('[data-story-caption]').forEach(el => el.textContent = (state.caption || 'Your caption').slice(0,80));
+			$$<HTMLElement>('[data-reel-caption]').forEach(el => el.textContent = (state.caption || 'Your caption will appear here.').slice(0,72));
+			$$<HTMLButtonElement>('[data-caption-toggle]').forEach(el => { el.hidden = state.caption.length <= 118; el.textContent = captionExpanded ? 'less' : 'more'; });
+			$$<HTMLElement>('[data-ig-surface]').forEach(el => el.dataset.igTheme = state.igTheme);
+			const storyCanvas=$<HTMLElement>('[data-story-layout-current]');
+			if(storyCanvas)storyCanvas.dataset.storyLayoutCurrent=state.storyLayout;
+			$$<HTMLButtonElement>('[data-story-layout]').forEach(button=>{const active=button.dataset.storyLayout===state.storyLayout;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+			root.classList.toggle('show-safe-zones', state.safe);
+			root.classList.toggle('show-safe-everywhere', state.safeEverywhere);
+			$<HTMLInputElement>('[data-safe-toggle]')!.checked = state.safe;
+			$<HTMLInputElement>('[data-safe-everywhere]')!.checked = state.safeEverywhere;
+			$$<HTMLInputElement>('[name="ig-theme"]').forEach(el => el.checked = el.value === state.igTheme);
+			$$<HTMLInputElement>('[name="feed-ratio"]').forEach(el => el.checked = el.value === state.feedRatio);
+			$$<HTMLInputElement>('[name="feed-width"]').forEach(el => el.checked = el.value === state.feedWidth);
+			root.style.setProperty('--feed-ratio',String({square:1,portrait:.8,landscape:1.91}[state.feedRatio]));
+			root.dataset.feedWidth=state.feedWidth;
+		};
+		const setMode = (mode:Mode) => {
+			state.mode = mode;
+			root.dataset.previewMode = mode;
+			$$<HTMLButtonElement>('[data-mode]').forEach(tab => { const active = tab.dataset.mode === mode; tab.setAttribute('aria-selected',String(active)); tab.tabIndex = active ? 0 : -1; });
+			const mobile = $<HTMLSelectElement>('[data-mobile-mode]'); if (mobile) mobile.value = mode;
+			$$<HTMLElement>('[data-placement]').forEach(card => card.hidden = mode !== 'all' && card.dataset.placement !== mode);
+			const url = new URL(location.href); if (mode === (initial || 'all')) url.searchParams.delete('view'); else url.searchParams.set('view',mode); history.replaceState({},'',url);
+			save(); emit('preview_tab_selected',{placement:mode});
+		};
+		const exportTargets:Record<Exclude<Mode,'all'>,string> = {
+			feed:'.ig-post',
+			grid:'.ig-profile-screen',
+			explore:'.ig-explore-screen',
+			reels:'.reel-comparison',
+			story:'.story-canvas',
+		};
+		const exportNames:Record<Exclude<Mode,'all'>,string> = {
+			feed:'instagram-feed-preview',
+			grid:'instagram-profile-grid-preview',
+			explore:'instagram-explore-preview',
+			reels:'instagram-reel-cover-previews',
+			story:'instagram-story-reshare-preview',
+		};
+		const createPreviewBlob = async (placement:Exclude<Mode,'all'>) => {
+			const card=$<HTMLElement>(`[data-placement="${placement}"]`);
+			const target=card?.querySelector<HTMLElement>(exportTargets[placement]);
+			if(!target)throw new Error(`Preview unavailable: ${placement}`);
+			await document.fonts?.ready;
+			await Promise.all([...target.querySelectorAll<HTMLImageElement>('img')].map(image =>
+				image.complete ? Promise.resolve() : image.decode().catch(()=>undefined)
+			));
+			const blob=await toBlob(target,{
+				cacheBust:true,
+				pixelRatio:Math.min(2,window.devicePixelRatio||1),
+				backgroundColor:getComputedStyle(target).backgroundColor||'#ffffff',
+			});
+			if(!blob)throw new Error(`Could not render ${placement}`);
+			return blob;
+		};
+		const saveBlob = (blob:Blob,name:string) => {
+			const url=URL.createObjectURL(blob);
+			const link=document.createElement('a');
+			link.href=url;link.download=name;document.body.append(link);link.click();link.remove();
+			setTimeout(()=>URL.revokeObjectURL(url),1000);
+		};
+		$$<HTMLButtonElement>('[data-download-preview]').forEach(button=>button.addEventListener('click',async()=>{
+			const card=button.closest<HTMLElement>('[data-placement]');
+			const placement=card?.dataset.placement as Exclude<Mode,'all'>|undefined;
+			if(!placement)return;
+			button.disabled=true;
+			button.setAttribute('aria-busy','true');
+			try{
+				saveBlob(await createPreviewBlob(placement),`${exportNames[placement]}.png`);
+				emit('preview_downloaded',{placement});
+			}catch(error){
+				console.error(error);
+				notify('This preview could not be downloaded. Please try again.','error');
+			}finally{
+				button.disabled=false;
+				button.removeAttribute('aria-busy');
+			}
+		}));
+		$<HTMLButtonElement>('[data-download-all]')?.addEventListener('click',async(event)=>{
+			const button=event.currentTarget as HTMLButtonElement;
+			if(!objectURLs.length){
+				notify('Upload an image or load the example before downloading previews.');
+				return;
+			}
+			button.disabled=true;
+			button.setAttribute('aria-busy','true');
+			try{
+				const zip=new JSZip();
+				for(const placement of Object.keys(exportTargets) as Exclude<Mode,'all'>[]){
+					zip.file(`${exportNames[placement]}.png`,await createPreviewBlob(placement));
+				}
+				saveBlob(await zip.generateAsync({type:'blob'}),'preview-my-post-all-views.zip');
+				emit('all_previews_downloaded');
+			}catch(error){
+				console.error(error);
+				notify('The preview package could not be downloaded. Please try again.','error');
+			}finally{
+				button.disabled=false;
+				button.removeAttribute('aria-busy');
+			}
+		});
+		const setImages = (src:string) => $$<HTMLImageElement>('[data-preview-image]').forEach(img => img.src = src);
+		const renderCarouselControls = () => {
+			const multiple=objectURLs.length>1;
+			root.dataset.postType=multiple?'carousel':(root.dataset.postType||'post');
+			const feedTrack=$<HTMLElement>('[data-feed-carousel-track]')!;
+			const currentSources=[...feedTrack.querySelectorAll<HTMLImageElement>('img')].map(img=>img.dataset.source);
+			if(currentSources.length!==objectURLs.length||currentSources.some((src,index)=>src!==objectURLs[index])){
+				feedTrack.innerHTML='';
+				objectURLs.forEach((src,index)=>{
+					const slide=document.createElement('div');
+					slide.className='feed-carousel-slide';
+					slide.setAttribute('role','group');
+					slide.setAttribute('aria-label',`Image ${index+1} of ${objectURLs.length}`);
+					const image=document.createElement('img');
+					image.src=src;
+					image.dataset.source=src;
+					image.alt=index===0?'Uploaded post feed preview':'';
+					image.width=1080;
+					image.height=1350;
+					image.draggable=false;
+					slide.append(image);
+					feedTrack.append(slide);
+				});
+			}
+			feedTrack.classList.remove('dragging');
+			feedTrack.style.transform=`translate3d(${-activeImageIndex*100}%,0,0)`;
+			const strip=$<HTMLElement>('[data-carousel-strip]')!;
+			strip.hidden=!objectURLs.length;
+			strip.innerHTML='';
+			if(objectURLs.length){
+				objectURLs.forEach((src,index)=>{
+					const item=document.createElement('div');
+					item.className='carousel-strip-item';
+					const button=document.createElement('button');
+					button.type='button';
+					button.className=`carousel-thumb-button${index===activeImageIndex?' active':''}`;
+					button.setAttribute('aria-label',`Preview carousel image ${index+1} of ${objectURLs.length}`);
+					button.setAttribute('aria-pressed',String(index===activeImageIndex));
+					const thumb=document.createElement('img');
+					thumb.src=src;thumb.alt='';thumb.width=44;thumb.height=44;
+					const number=document.createElement('span');number.textContent=String(index+1);
+					button.append(thumb,number);
+					button.addEventListener('click',()=>setActiveImage(index));
+					const remove=document.createElement('button');
+					remove.type='button';
+					remove.className='carousel-image-remove';
+					remove.setAttribute('aria-label',`Remove image ${index+1}`);
+					remove.title=`Remove image ${index+1}`;
+					remove.textContent='×';
+					remove.addEventListener('click',()=>removeCarouselImage(index));
+					item.append(button,remove);
+					strip.append(item);
+				});
+				if(objectURLs.length<10){
+					const addButton=document.createElement('button');
+					addButton.type='button';
+					addButton.className='carousel-add-button';
+					addButton.setAttribute('aria-label','Add more images');
+					addButton.title='Add more images';
+					addButton.textContent='+';
+					addButton.addEventListener('click',()=>{
+						const input=$<HTMLInputElement>('[data-add-image-input]');
+						if(input){input.value='';input.click();}
+					});
+					strip.append(addButton);
+				}
+			}
+			$<HTMLElement>('[data-carousel-dots]')!.innerHTML=objectURLs.map((_,index)=>`<i class="${index===activeImageIndex?'active':''}"></i>`).join('');
+			$<HTMLElement>('[data-carousel-count]')!.textContent=multiple?`${activeImageIndex+1}/${objectURLs.length}`:'';
+			$<HTMLElement>('[data-carousel-previous]')?.toggleAttribute('hidden',!multiple||activeImageIndex===0);
+			$<HTMLElement>('[data-carousel-next]')?.toggleAttribute('hidden',!multiple||activeImageIndex===objectURLs.length-1);
+			if(multiple){
+				$$<HTMLInputElement>('[name="post-type"]').forEach(el=>el.checked=el.value==='carousel');
+			}
+		};
+		const issueMarkup = (tone:'warning'|'error'|'success', title:string, placement:string, fix:string) => {
+			const statusIcon = tone === 'success'
+				? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>'
+				: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3h.01"/></svg>';
+			return `<details class="issue ${tone}"><summary><span class="issue-mark">${statusIcon}</span><span><strong>${title}</strong><small>${placement}</small></span><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></i></summary><div><b>Try this</b><p>${fix}</p></div></details>`;
+		};
+		const analyze = (img:HTMLImageElement, file:File|null) => {
+			const w=img.naturalWidth, h=img.naturalHeight, ratio=w/h, issues:string[]=[];
+			const lowResolution=w<720||h<720;
+			const extremeRatio=ratio>1.92||ratio<.56;
+			const gridCrop=Math.abs(ratio-1)>.12;
+			const exploreRisk=w<1080;
+			const reelCrop=Math.abs(ratio-(9/16))>.08;
+			const selectedFeedRatio={square:1,portrait:.8,landscape:1.91}[state.feedRatio];
+			const feedCrop=Math.abs(ratio-selectedFeedRatio)>.08;
+			const statuses:Record<string,string>={
+				feed:feedCrop?'Check crop':lowResolution?'Check quality':'Good',
+				grid:gridCrop?'Check crop':'Good',
+				explore:exploreRisk?'Check clarity':'Good',
+				reels:reelCrop?'Check crop':'Good',
+				story:lowResolution?'Check quality':'Good',
+			};
+			if (lowResolution) issues.push(issueMarkup('error','Image may look blurry','All views','Use an image at least 1080 px wide.'));
+			if (extremeRatio) issues.push(issueMarkup('error','Heavy cropping likely','Feed, Grid & Reels','Use 4:5 for posts or 9:16 for Reel covers.'));
+			if (feedCrop) issues.push(issueMarkup('warning','Selected feed ratio will crop','Feed','Try another feed ratio or reframe the image.'));
+			if (Math.abs(ratio-1) > .12) issues.push(issueMarkup('warning','Grid crop changes the image','Profile Grid','Keep faces, text, and logos near the center.'));
+			if (w < 1080) issues.push(issueMarkup('warning','Small details may be hard to read','Explore','Make important text larger and simpler.'));
+			if(reelCrop) issues.push(issueMarkup('warning','Reel crops do not match','Reels','Use a 1080 × 1920 cover and center the title.'));
+			if (state.caption.length > 118) issues.push(issueMarkup('warning','Caption will be shortened','Feed','Put the main message in the first sentence.'));
+			if (!issues.length) issues.push(issueMarkup('success','No obvious issues found','All views','Review each preview once before publishing.'));
+			const issueCount = issues.filter(x=>!x.includes('success')).length;
+			$$<HTMLElement>('[data-issue-count]').forEach(el=>el.textContent=String(issueCount));
+			$<HTMLElement>('[data-issues-list]')!.innerHTML=issues.join('');
+			$<HTMLElement>('[data-source-ratio]')!.textContent=`${ratio.toFixed(2)}:1`;
+			$<HTMLElement>('[data-resolution]')!.textContent=`${format.format(w)} × ${format.format(h)}`;
+			$<HTMLElement>('[data-file-size]')!.textContent=file?`${(file.size/1024/1024).toFixed(2)} MB`:'Example';
+			const formats=[{name:'4:5 Feed',ratio:.8},{name:'1:1 Grid',ratio:1},{name:'9:16 Reel',ratio:9/16},{name:'1.91:1 Wide',ratio:1.91}];
+			$<HTMLElement>('[data-best-fit]')!.textContent=formats.sort((a,b)=>Math.abs(a.ratio-ratio)-Math.abs(b.ratio-ratio))[0].name;
+			$<HTMLElement>('[data-check-summary]')!.textContent=issueCount ? `${issueCount} ${issueCount===1?'item':'items'}` : 'All clear';
+			const hasError=issues.some(x=>x.includes('error'));
+			$<HTMLElement>('[data-overall-status]')!.textContent=issueCount ? (hasError?'Fix Before Posting':'Quick Review Needed') : 'Looks Good';
+			const overall=$<HTMLElement>('[data-overall-card]');
+			if(overall)overall.dataset.tone=issueCount?(hasError?'error':'warning'):'success';
+			$<HTMLElement>('[data-status-icon]')!.innerHTML=issueCount?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5m0 3h.01"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
+			Object.entries(statuses).forEach(([key,value])=>{ const el=$<HTMLElement>(`[data-status="${key}"]`); if(el){el.textContent=value;el.dataset.tone=value==='Good'?'success':'warning';}});
+			$<HTMLElement>('[data-report-empty]')!.hidden=true; $<HTMLElement>('[data-report-results]')!.hidden=false;
+			$<HTMLElement>('[data-empty-preview]')!.hidden=true; $<HTMLElement>('[data-preview-cards]')!.hidden=false;
+			$<HTMLElement>('[data-image-actions]')!.hidden=false;
+			$<HTMLElement>('[data-upload-title]')!.textContent=file?.name || 'Example post loaded';
+			$<HTMLElement>('[data-upload-help]')!.textContent=`${format.format(w)} × ${format.format(h)} · ${(file?.size ? file.size/1024/1024 : .8).toFixed(1)} MB`;
+			$<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="privacy-dot" aria-hidden="true"></span><span>Processed locally. Your image stays in this browser.</span>';
+			$<HTMLElement>('[data-drop-zone]')!.classList.add('has-image');
+			setMode(state.mode);
+		};
+		const useImage = (src:string,file:File|null) => { const image=new Image(); image.onload=()=>{setImages(src);analyze(image,file);renderCarouselControls();}; image.src=src; };
+		const setActiveImage = (index:number) => {
+			if(!objectURLs.length)return;
+			activeImageIndex=Math.max(0,Math.min(objectURLs.length-1,index));
+			useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null);
+		};
+		const removeCarouselImage = (index:number) => {
+			if(index<0||index>=objectURLs.length)return;
+			const removed=objectURLs[index];
+			if(removed.startsWith('blob:'))URL.revokeObjectURL(removed);
+			objectURLs.splice(index,1);
+			carouselFiles.splice(index,1);
+			if(!objectURLs.length){
+				$<HTMLButtonElement>('[data-remove-image]')?.click();
+				return;
+			}
+			if(index<activeImageIndex)activeImageIndex--;
+			else if(activeImageIndex>=objectURLs.length)activeImageIndex=objectURLs.length-1;
+			useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null);
+			emit('image_removed',{remaining:objectURLs.length});
+		};
+		const handleFiles = (incoming:File[]|FileList,append=false) => {
+			const available=append?Math.max(0,10-objectURLs.length):10;
+			const files=[...incoming].slice(0,available);
+			if(!files.length)return;
+			if(files.some(file=>!['image/jpeg','image/png','image/webp'].includes(file.type))){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Every image must be JPG, PNG, or WebP.</span>'; return; }
+			if(files.some(file=>file.size>15*1024*1024)){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Each image must be smaller than 15&nbsp;MB.</span>'; return; }
+			const replacing=objectURLs.length>0&&!append;
+			if(append){
+				const firstNewIndex=objectURLs.length;
+				objectURLs.push(...files.map(file=>URL.createObjectURL(file)));
+				carouselFiles.push(...files);
+				activeImageIndex=firstNewIndex;
+				useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]);
+			}else{
+				objectURLs.forEach(url=>{if(url.startsWith('blob:'))URL.revokeObjectURL(url);});
+				objectURLs=files.map(file=>URL.createObjectURL(file));
+				carouselFiles=files;
+				activeImageIndex=0;
+				useImage(objectURLs[0],files[0]);
+			}
+			emit(append?'images_added':replacing?'image_replaced':'image_uploaded',{type:files[0].type,count:files.length,size_bucket:files[0].size>5e6?'large':'standard'});
+		};
+		$<HTMLInputElement>('[data-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files)handleFiles(files);});
+		$<HTMLInputElement>('[data-add-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files)handleFiles(files,true);});
+		const drop=$<HTMLElement>('[data-drop-zone]')!;
+		['dragenter','dragover'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add('dragging')}));
+		['dragleave','drop'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('dragging')}));
+		drop.addEventListener('drop',e=>{if(e.dataTransfer?.files)handleFiles(e.dataTransfer.files);});
+		document.addEventListener('paste',e=>{const files=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/'));if(files.length)handleFiles(files);});
+		$<HTMLButtonElement>('[data-example]')?.addEventListener('click',()=>{ objectURLs=['/example-post.svg'];carouselFiles=[null];activeImageIndex=0;useImage(objectURLs[0],null);emit('example_loaded'); });
+		$<HTMLButtonElement>('[data-remove-image]')?.addEventListener('click',()=>{objectURLs.forEach(url=>{if(url.startsWith('blob:'))URL.revokeObjectURL(url);});objectURLs=[];carouselFiles=[];activeImageIndex=0;$<HTMLElement>('[data-preview-cards]')!.hidden=true;$<HTMLElement>('[data-empty-preview]')!.hidden=false;$<HTMLElement>('[data-report-results]')!.hidden=true;$<HTMLElement>('[data-report-empty]')!.hidden=false;$<HTMLElement>('[data-image-actions]')!.hidden=true;$<HTMLElement>('[data-carousel-strip]')!.hidden=true;drop.classList.remove('has-image');delete root.dataset.postType;$<HTMLElement>('[data-upload-title]')!.textContent='Drop Your Images Here';$<HTMLElement>('[data-upload-help]')!.textContent='JPG, PNG, or WebP · up to 10 images';});
+		$<HTMLButtonElement>('[data-carousel-previous]')?.addEventListener('click',()=>setActiveImage(activeImageIndex-1));
+		$<HTMLButtonElement>('[data-carousel-next]')?.addEventListener('click',()=>setActiveImage(activeImageIndex+1));
+		const feedCarousel=$<HTMLElement>('[data-feed-carousel]');
+		const feedTrack=$<HTMLElement>('[data-feed-carousel-track]');
+		if(feedCarousel&&feedTrack){
+			let dragging=false;
+			let startX=0;
+			let currentX=0;
+			let startIndex=0;
+			const move=(event:PointerEvent)=>{
+				if(!dragging)return;
+				currentX=event.clientX;
+				const delta=currentX-startX;
+				feedTrack.style.transform=`translate3d(calc(${-startIndex*100}% + ${delta}px),0,0)`;
+			};
+			const finish=(event:PointerEvent)=>{
+				if(!dragging)return;
+				dragging=false;
+				feedTrack.classList.remove('dragging');
+				if(feedCarousel.hasPointerCapture(event.pointerId))feedCarousel.releasePointerCapture(event.pointerId);
+				const delta=currentX-startX;
+				const threshold=Math.min(72,feedCarousel.clientWidth*.18);
+				if(Math.abs(delta)>threshold)setActiveImage(startIndex+(delta<0?1:-1));
+				else feedTrack.style.transform=`translate3d(${-startIndex*100}%,0,0)`;
+			};
+			feedCarousel.addEventListener('pointerdown',(event)=>{
+				if(objectURLs.length<2||event.button!==0)return;
+				dragging=true;
+				startX=currentX=event.clientX;
+				startIndex=activeImageIndex;
+				feedTrack.classList.add('dragging');
+				feedCarousel.setPointerCapture(event.pointerId);
+			});
+			feedCarousel.addEventListener('pointermove',move);
+			feedCarousel.addEventListener('pointerup',finish);
+			feedCarousel.addEventListener('pointercancel',finish);
+		}
+		$<HTMLInputElement>('[data-profile-input]')?.addEventListener('change',e=>{
+			const f=(e.currentTarget as HTMLInputElement).files?.[0];
+			if(!f||!f.type.startsWith('image/'))return;
+			if(profileURL)URL.revokeObjectURL(profileURL);
+			profileURL=URL.createObjectURL(f);
+			applyProfileImage(profileURL);
+			const image=new Image();
+			image.onload=()=>{
+				const size=256;
+				const canvas=document.createElement('canvas');
+				canvas.width=size;
+				canvas.height=size;
+				const context=canvas.getContext('2d');
+				if(!context)return;
+				const scale=Math.max(size/image.naturalWidth,size/image.naturalHeight);
+				const width=image.naturalWidth*scale;
+				const height=image.naturalHeight*scale;
+				context.drawImage(image,(size-width)/2,(size-height)/2,width,height);
+				try{
+					const saved=canvas.toDataURL('image/webp',.82);
+					localStorage.setItem('pmp-profile-image',saved);
+					applyProfileImage(saved);
+				}catch{}
+			};
+			image.src=profileURL;
+		});
+		const updateGridCellControls=()=>{
+			$$<HTMLElement>('[data-grid-position]').forEach(tile=>{
+				const active=tile.classList.contains('active-upload');
+				const custom=Boolean(tile.querySelector('.grid-placeholder-image'));
+				const remove=tile.querySelector<HTMLButtonElement>('[data-grid-cell-remove]');
+				if(remove)remove.hidden=active||!custom;
+				tile.tabIndex=active?-1:0;
+			});
+		};
+		const openGridImagePicker=(position:number)=>{
+			selectedGridCell=position;
+			const input=$<HTMLInputElement>('[data-grid-cell-input]');
+			if(input){input.value='';input.click();}
+		};
+		$<HTMLInputElement>('[data-grid-cell-input]')?.addEventListener('change',e=>{
+			const file=(e.currentTarget as HTMLInputElement).files?.[0];
+			const tile=$<HTMLElement>(`[data-grid-position="${selectedGridCell}"]`);
+			if(!file||!tile||!['image/jpeg','image/png','image/webp'].includes(file.type))return;
+			if(gridImageURLs[selectedGridCell])URL.revokeObjectURL(gridImageURLs[selectedGridCell]);
+			const src=URL.createObjectURL(file);
+			gridImageURLs[selectedGridCell]=src;
+			tile.querySelector('.grid-placeholder-image')?.remove();
+			const image=document.createElement('img');
+			image.src=src;
+			image.alt=`Custom profile grid image ${selectedGridCell+1}`;
+			image.className='grid-placeholder-image';
+			image.draggable=false;
+			tile.prepend(image);
+			updateGridCellControls();
+		});
+		$$<HTMLButtonElement>('[data-grid-cell-remove]').forEach(button=>button.addEventListener('click',()=>{
+			const index=Number(button.dataset.gridCellRemove);
+			const tile=$<HTMLElement>(`[data-grid-position="${index}"]`);
+			if(gridImageURLs[index])URL.revokeObjectURL(gridImageURLs[index]);
+			delete gridImageURLs[index];
+			tile?.querySelector('.grid-placeholder-image')?.remove();
+			updateGridCellControls();
+		}));
+		$$<HTMLInputElement|HTMLTextAreaElement>('[data-field]').forEach(el=>el.addEventListener('input',()=>{const key=el.dataset.field as keyof PreviewState;if(el instanceof HTMLInputElement&&el.type==='checkbox')(state as any)[key]=el.checked;else if(el instanceof HTMLInputElement&&el.type==='number')(state as any)[key]=Number(el.value);else (state as any)[key]=el.value;renderFields();save();if(key==='caption')emit('caption_added',{length_bucket:state.caption.length>500?'long':'short'});}));
+		$$<HTMLInputElement>('[name="ig-theme"]').forEach(el=>el.addEventListener('change',()=>{state.igTheme=el.value as 'light'|'dark';renderFields();save();}));
+		$$<HTMLInputElement>('[name="feed-ratio"]').forEach(el=>el.addEventListener('change',()=>{state.feedRatio=el.value as PreviewState['feedRatio'];renderFields();save();if(objectURLs.length)useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null);}));
+		$$<HTMLInputElement>('[name="feed-width"]').forEach(el=>el.addEventListener('change',()=>{state.feedWidth=el.value as PreviewState['feedWidth'];renderFields();save();}));
+		$<HTMLButtonElement>('[data-copy-caption]')?.addEventListener('click',async()=>{
+			const status=$<HTMLElement>('[data-caption-action-status]');
+			if(!state.caption.trim()){if(status)status.textContent='Caption is empty.';return;}
+			try{await navigator.clipboard.writeText(state.caption);if(status)status.textContent='Caption copied.';}
+			catch{if(status)status.textContent='Could not copy the caption.';}
+		});
+		$<HTMLButtonElement>('[data-clear-caption]')?.addEventListener('click',()=>{
+			state.caption='';
+			captionExpanded=false;
+			renderFields();save();
+			$<HTMLTextAreaElement>('[data-field="caption"]')?.focus();
+			const status=$<HTMLElement>('[data-caption-action-status]');if(status)status.textContent='Caption cleared.';
+		});
+		$$<HTMLButtonElement>('[data-story-layout]').forEach(button=>button.addEventListener('click',()=>{state.storyLayout=button.dataset.storyLayout as 'post'|'media';renderFields();save();}));
+		$$<HTMLInputElement>('[name="post-type"]').forEach(el=>el.addEventListener('change',()=>{root.dataset.postType=el.value;}));
+		$<HTMLInputElement>('[data-safe-toggle]')?.addEventListener('change',e=>{state.safe=(e.currentTarget as HTMLInputElement).checked;renderFields();save();if(state.safe)emit('safe_zones_enabled');});
+		$<HTMLInputElement>('[data-safe-everywhere]')?.addEventListener('change',e=>{state.safeEverywhere=(e.currentTarget as HTMLInputElement).checked;renderFields();save();});
+		$$<HTMLButtonElement>('.card-safe-toggle').forEach(btn=>btn.addEventListener('click',()=>{state.safe=!state.safe;renderFields();}));
+		$$<HTMLButtonElement>('[data-mode]').forEach(tab=>tab.addEventListener('click',()=>setMode(tab.dataset.mode as Mode)));
+		$<HTMLElement>('.preview-tabs')?.addEventListener('keydown',(event)=>{
+			if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+			const tabs=$$<HTMLButtonElement>('[data-mode]');
+			const current=tabs.indexOf(document.activeElement as HTMLButtonElement);
+			if(current<0)return;
+			event.preventDefault();
+			const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(current+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+			tabs[next].focus();
+			setMode(tabs[next].dataset.mode as Mode);
+		});
+		$<HTMLSelectElement>('[data-mobile-mode]')?.addEventListener('change',e=>setMode((e.currentTarget as HTMLSelectElement).value as Mode));
+		$$<HTMLButtonElement>('[data-caption-toggle]').forEach(btn=>btn.addEventListener('click',()=>{captionExpanded=!captionExpanded;renderFields();}));
+		const gridContent=(tile:HTMLElement)=>[
+			...tile.querySelectorAll<HTMLElement>(':scope > img, :scope > .safe-overlay'),
+		];
+		const insertGridContent=(tile:HTMLElement,nodes:HTMLElement[])=>{
+			const firstControl=tile.querySelector('button');
+			nodes.forEach(node=>firstControl?tile.insertBefore(node,firstControl):tile.append(node));
+		};
+		const swapGridTiles=(source:HTMLElement,target:HTMLElement)=>{
+			if(source===target)return;
+			const sourcePosition=Number(source.dataset.gridPosition);
+			const targetPosition=Number(target.dataset.gridPosition);
+			const sourceContent=gridContent(source);
+			const targetContent=gridContent(target);
+			sourceContent.forEach(node=>node.remove());
+			targetContent.forEach(node=>node.remove());
+			insertGridContent(source,targetContent);
+			insertGridContent(target,sourceContent);
+			const sourceURL=gridImageURLs[sourcePosition];
+			const targetURL=gridImageURLs[targetPosition];
+			delete gridImageURLs[sourcePosition];
+			delete gridImageURLs[targetPosition];
+			if(targetURL)gridImageURLs[sourcePosition]=targetURL;
+			if(sourceURL)gridImageURLs[targetPosition]=sourceURL;
+			if(source.classList.contains('active-upload')){
+				source.classList.remove('active-upload');
+				target.classList.add('active-upload');
+				state.gridPosition=targetPosition;
+			}else if(target.classList.contains('active-upload')){
+				target.classList.remove('active-upload');
+				source.classList.add('active-upload');
+				state.gridPosition=sourcePosition;
+			}
+			updateGridCellControls();
+		};
+		let draggedGridTile:HTMLElement|null=null;
+		let gridWasDragged=false;
+		$$<HTMLElement>('[data-grid-position]').forEach(tile=>{
+			tile.addEventListener('click',event=>{
+				if((event.target as Element).closest('[data-grid-cell-remove]'))return;
+				if(gridWasDragged){gridWasDragged=false;return;}
+				if(!tile.classList.contains('active-upload')&&!tile.querySelector('.grid-placeholder-image'))openGridImagePicker(Number(tile.dataset.gridPosition));
+			});
+			tile.addEventListener('keydown',event=>{
+				if((event.key==='Enter'||event.key===' ')&&event.target===tile&&!tile.classList.contains('active-upload')&&!tile.querySelector('.grid-placeholder-image')){event.preventDefault();openGridImagePicker(Number(tile.dataset.gridPosition));}
+			});
+			tile.addEventListener('dragstart',event=>{
+				if((event.target as Element).closest('[data-grid-cell-remove]')){event.preventDefault();return;}
+				draggedGridTile=tile;
+				gridWasDragged=true;
+				tile.classList.add('dragging');
+				event.dataTransfer?.setData('text/plain',tile.dataset.gridPosition||'');
+				if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+			});
+			tile.addEventListener('dragover',event=>{
+				if(!draggedGridTile||draggedGridTile===tile)return;
+				event.preventDefault();
+				if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+				tile.classList.add('drop-target');
+			});
+			tile.addEventListener('dragleave',()=>tile.classList.remove('drop-target'));
+			tile.addEventListener('drop',event=>{
+				event.preventDefault();
+				tile.classList.remove('drop-target');
+				if(draggedGridTile)swapGridTiles(draggedGridTile,tile);
+			});
+			tile.addEventListener('dragend',()=>{
+				$$<HTMLElement>('[data-grid-position]').forEach(item=>item.classList.remove('dragging','drop-target'));
+				draggedGridTile=null;
+				setTimeout(()=>{gridWasDragged=false;},0);
+			});
+		});
+		const updateExploreTiles=()=>{
+			$$<HTMLElement>('[data-explore-position]').forEach(tile=>{
+				const active=tile.classList.contains('explore-active-upload');
+				tile.draggable=active;
+				tile.tabIndex=active?-1:0;
+				tile.setAttribute('aria-label',active?`Uploaded post in Explore position ${Number(tile.dataset.explorePosition)+1}`:`Move uploaded post to Explore position ${Number(tile.dataset.explorePosition)+1}`);
+			});
+		};
+		const moveExplorePost=(target:HTMLElement)=>{
+			const active=$<HTMLElement>('.explore-active-upload');
+			if(!active||active===target)return;
+			const content=[...active.querySelectorAll<HTMLElement>(':scope > img[data-preview-image], :scope > .safe-overlay, :scope > .explore-upload-marker')];
+			const views=target.querySelector(':scope > .explore-views');
+			content.forEach(node=>views?target.insertBefore(node,views):target.append(node));
+			active.classList.remove('explore-active-upload');
+			target.classList.add('explore-active-upload');
+			updateExploreTiles();
+		};
+		let draggedExploreTile:HTMLElement|null=null;
+		let exploreWasDragged=false;
+		$$<HTMLElement>('[data-explore-position]').forEach(tile=>{
+			tile.addEventListener('click',()=>{
+				if(exploreWasDragged){exploreWasDragged=false;return;}
+				moveExplorePost(tile);
+			});
+			tile.addEventListener('keydown',event=>{
+				if((event.key==='Enter'||event.key===' ')&&event.target===tile){event.preventDefault();moveExplorePost(tile);}
+			});
+			tile.addEventListener('dragstart',event=>{
+				if(!tile.classList.contains('explore-active-upload')){event.preventDefault();return;}
+				draggedExploreTile=tile;
+				exploreWasDragged=true;
+				tile.classList.add('dragging');
+				event.dataTransfer?.setData('text/plain',tile.dataset.explorePosition||'');
+				if(event.dataTransfer)event.dataTransfer.effectAllowed='move';
+			});
+			tile.addEventListener('dragover',event=>{
+				if(!draggedExploreTile||draggedExploreTile===tile)return;
+				event.preventDefault();
+				tile.classList.add('drop-target');
+			});
+			tile.addEventListener('dragleave',()=>tile.classList.remove('drop-target'));
+			tile.addEventListener('drop',event=>{
+				event.preventDefault();
+				tile.classList.remove('drop-target');
+				if(draggedExploreTile)moveExplorePost(tile);
+			});
+			tile.addEventListener('dragend',()=>{
+				$$<HTMLElement>('[data-explore-position]').forEach(item=>item.classList.remove('dragging','drop-target'));
+				draggedExploreTile=null;
+				setTimeout(()=>{exploreWasDragged=false;},0);
+			});
+		});
+		$$<HTMLButtonElement>('[data-grid-shape]').forEach(btn=>btn.addEventListener('click',()=>{
+			const shape=btn.dataset.gridShape||'portrait';
+			$<HTMLElement>('[data-profile-grid]')?.setAttribute('data-shape',shape);
+			$$<HTMLButtonElement>('[data-grid-shape]').forEach(option=>{const active=option===btn;option.classList.toggle('active',active);option.setAttribute('aria-pressed',String(active));});
+		}));
+		const zoom=(delta:number)=>{state.zoom=Math.min(130,Math.max(70,state.zoom+delta));$<HTMLElement>('[data-preview-cards]')!.style.setProperty('--preview-zoom',String(state.zoom/100));$<HTMLOutputElement>('[data-zoom-output]')!.value=`${state.zoom}%`;};
+		$<HTMLButtonElement>('[data-zoom-in]')?.addEventListener('click',()=>zoom(10)); $<HTMLButtonElement>('[data-zoom-out]')?.addEventListener('click',()=>zoom(-10));
+		$$<HTMLButtonElement>('.card-expand').forEach(btn=>btn.addEventListener('click',()=>{const card=btn.closest('.placement-card');card?.classList.toggle('expanded');btn.setAttribute('aria-label',card?.classList.contains('expanded')?'Collapse preview':'Expand preview');}));
+		$<HTMLElement>('[data-issues-list]')?.addEventListener('toggle',(event)=>{const target=event.target;if(target instanceof HTMLDetailsElement&&target.open)emit('issue_viewed',{issue:target.querySelector('strong')?.textContent||'unknown'});},true);
+		const closePanels=()=>{root.classList.remove('setup-open','report-open');$<HTMLElement>('[data-sheet-backdrop]')!.hidden=true;};
+		$<HTMLButtonElement>('[data-open-setup]')?.addEventListener('click',()=>{root.classList.add('setup-open');$<HTMLElement>('[data-sheet-backdrop]')!.hidden=false;});
+		$<HTMLButtonElement>('[data-open-report]')?.addEventListener('click',()=>{root.classList.add('report-open');$<HTMLElement>('[data-sheet-backdrop]')!.hidden=false;});
+		$$<HTMLButtonElement>('[data-close-panels]').forEach(b=>b.addEventListener('click',closePanels));$<HTMLElement>('[data-sheet-backdrop]')?.addEventListener('click',closePanels);
+		const updateFullscreenButtons=()=>{
+			const active=root.classList.contains('is-fullscreen');
+			root.classList.toggle('is-fullscreen',active);
+			$$<HTMLButtonElement>('[data-fullscreen-toggle]').forEach(button=>button.setAttribute('aria-label',active?'Exit expanded workspace':'Expand workspace'));
+		};
+		$$<HTMLButtonElement>('[data-fullscreen-toggle]').forEach(button=>{
+			button.addEventListener('click',()=>{
+				const active=!root.classList.contains('is-fullscreen');
+				root.classList.toggle('is-fullscreen',active);
+				document.body.classList.toggle('workspace-expanded',active);
+				updateFullscreenButtons();
+			});
+		});
+		document.addEventListener('keydown',(event)=>{
+			if(event.key==='Escape'&&root.classList.contains('is-fullscreen')){
+				root.classList.remove('is-fullscreen');
+				document.body.classList.remove('workspace-expanded');
+				updateFullscreenButtons();
+			}
+		});
+		$<HTMLButtonElement>('[data-reset]')?.addEventListener('click',()=>{if(!confirm('Reset all preview fields and settings?'))return;Object.assign(state,defaults,{mode:initial||'all'});localStorage.removeItem('pmp-draft');localStorage.removeItem('pmp-profile-image');gridImageURLs.forEach(url=>{if(url)URL.revokeObjectURL(url);});gridImageURLs=[];$$<HTMLElement>('.grid-placeholder-image').forEach(image=>image.remove());applyProfileImage('');updateGridCellControls();renderFields();setMode(state.mode);emit('tool_reset');});
+		updateGridCellControls();updateExploreTiles();renderFields();setMode(state.mode);
+		if(initial && initial!=='all')emit('seo_landing_page_used',{page:location.pathname,mode:initial});
+	});
+</script>

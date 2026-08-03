@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+  <defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ddd8cd"/><stop offset="1" stop-color="#77746f"/></linearGradient></defs>
+  <rect width="1080" height="1350" fill="url(#b)"/>
+  <rect x="88" y="95" width="904" height="1160" rx="8" fill="#ece8df"/>
+  <circle cx="790" cy="490" r="250" fill="#b8b2a6"/>
+  <path d="M130 1050 430 625l190 260 130-165 230 330Z" fill="#333330"/>
+  <text x="150" y="245" fill="#252525" font-family="Arial,sans-serif" font-size="78" font-weight="700">MAKE ROOM</text>
+  <text x="150" y="325" fill="#252525" font-family="Arial,sans-serif" font-size="78" font-weight="700">FOR QUIET.</text>
+  <text x="154" y="390" fill="#555" font-family="Arial,sans-serif" font-size="28">STUDIO NORTH — 2026</text>
+  <rect x="150" y="1130" width="190" height="5" fill="#635bff"/>
+</svg>

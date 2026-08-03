@@ -1,0 +1,59 @@
+---
+import { Menu, Moon, Sun, X } from '@lucide/astro';
+const pathname = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isActive = (href: string) => {
+	const route = href.split('#')[0].replace(/\/+$/, '') || '/';
+	return pathname === route;
+};
+---
+<header class="site-header">
+	<div class="nav-shell">
+		<a class="brand" href="/" aria-label="Preview My Post home">
+			<span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+			<span>Preview My Post</span>
+		</a>
+		<nav aria-label="Primary navigation">
+			<a href="/#preview-tool" class:list={{ active: isActive('/') }} aria-current={isActive('/') ? 'page' : undefined}>Preview Tool</a>
+			<a href="/about" class:list={{ active: isActive('/about') }} aria-current={isActive('/about') ? 'page' : undefined}>About</a>
+		</nav>
+		<div class="nav-actions">
+			<button class="icon-button theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme">
+				<Sun class="sun" size={16} stroke-width={1.8} aria-hidden="true" />
+				<Moon class="moon" size={16} stroke-width={1.8} aria-hidden="true" />
+			</button>
+			<button class="icon-button mobile-menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-navigation">
+				<Menu class="menu-open-icon" size={18} aria-hidden="true" />
+				<X class="menu-close-icon" size={18} aria-hidden="true" />
+			</button>
+		</div>
+	</div>
+	<nav class="mobile-navigation" id="mobile-navigation" aria-label="Mobile navigation" hidden>
+		<a href="/#preview-tool" class:list={{ active: isActive('/') }} aria-current={isActive('/') ? 'page' : undefined}>Preview Tool</a>
+		<a href="/about" class:list={{ active: isActive('/about') }} aria-current={isActive('/about') ? 'page' : undefined}>About</a>
+	</nav>
+</header>
+
+<script>
+	document.querySelectorAll<HTMLElement>('.site-header').forEach((header) => {
+		const toggle = header.querySelector<HTMLButtonElement>('.mobile-menu-toggle');
+		const menu = header.querySelector<HTMLElement>('.mobile-navigation');
+		if (!toggle || !menu) return;
+		const close = () => {
+			menu.hidden = true;
+			toggle.setAttribute('aria-expanded', 'false');
+			toggle.setAttribute('aria-label', 'Open navigation menu');
+			header.classList.remove('menu-open');
+		};
+		toggle.addEventListener('click', () => {
+			const opening = menu.hasAttribute('hidden');
+			menu.hidden = !opening;
+			toggle.setAttribute('aria-expanded', String(opening));
+			toggle.setAttribute('aria-label', opening ? 'Close navigation menu' : 'Open navigation menu');
+			header.classList.toggle('menu-open', opening);
+		});
+		menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', close));
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') close();
+		});
+	});
+</script>
