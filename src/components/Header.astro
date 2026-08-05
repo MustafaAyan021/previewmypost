@@ -15,7 +15,6 @@ const isActive = (href: string) => {
 		<nav aria-label="Primary navigation">
 			<a href="/#preview-tool" class:list={{ active: isActive('/') }} aria-current={isActive('/') ? 'page' : undefined}>Preview Tool</a>
 			<a href="/about" class:list={{ active: isActive('/about') }} aria-current={isActive('/about') ? 'page' : undefined}>About</a>
-			<a href="/contact" class:list={{ active: isActive('/contact') }} aria-current={isActive('/contact') ? 'page' : undefined}>Contact</a>
 			<a href="/privacy" class:list={{ active: isActive('/privacy') }} aria-current={isActive('/privacy') ? 'page' : undefined}>Privacy</a>
 			<a href="/terms" class:list={{ active: isActive('/terms') }} aria-current={isActive('/terms') ? 'page' : undefined}>Terms</a>
 		</nav>
@@ -33,7 +32,6 @@ const isActive = (href: string) => {
 	<nav class="mobile-navigation" id="mobile-navigation" aria-label="Mobile navigation" hidden>
 		<a href="/#preview-tool" class:list={{ active: isActive('/') }} aria-current={isActive('/') ? 'page' : undefined}>Preview Tool</a>
 		<a href="/about" class:list={{ active: isActive('/about') }} aria-current={isActive('/about') ? 'page' : undefined}>About</a>
-		<a href="/contact" class:list={{ active: isActive('/contact') }} aria-current={isActive('/contact') ? 'page' : undefined}>Contact</a>
 		<a href="/privacy" class:list={{ active: isActive('/privacy') }} aria-current={isActive('/privacy') ? 'page' : undefined}>Privacy</a>
 		<a href="/terms" class:list={{ active: isActive('/terms') }} aria-current={isActive('/terms') ? 'page' : undefined}>Terms</a>
 	</nav>
