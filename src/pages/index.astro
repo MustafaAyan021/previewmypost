@@ -2,14 +2,21 @@
 import Layout from '../layouts/Layout.astro';
 import PreviewWorkspace from '../components/PreviewWorkspace.astro';
 import AdSlot from '../components/AdSlot.astro';
-const title = 'Preview My Post — Instagram Preview & Crop Checker';
-const description = 'Upload once and preview your Instagram post in the feed, profile grid, Explore, Reels, and Stories. Catch crop, safe-zone, thumbnail, and caption issues.';
+const title = 'Instagram Post Preview — Free Online Tool & Generator';
+const description = 'Free Instagram post preview app: see your photo in the feed, grid, Explore, Reels & Stories before you post. Check ratio and crop online — no login required.';
 const faqs = [
 	['Is Preview My Post free?','Yes. The preview tool is free to use, requires no login, and does not connect to an Instagram account.'],
 	['Does my image get uploaded?','No. Your selected image is decoded and analyzed locally in your browser whenever practical. The image itself is not sent to our server or analytics.'],
 	['How accurate are the previews?','They are practical estimates based on current Instagram layouts. Instagram can test or roll out changes differently across accounts, regions, devices, and experiments.'],
 	['What image files can I use?','The tool accepts JPG, PNG, and WebP files up to 15 MB and warns about extremely low resolution or unusual aspect ratios.'],
 	['What is the “Safe Everywhere” area?','It is a conservative intersection of key placement crops intended to help keep essential text, logos, and subjects visible. It is not an official Instagram specification.'],
+	['How do I see an Instagram post preview before publishing?','Upload a JPG, PNG, or WebP image in the tool above — no login or Instagram connection needed. It instantly renders your Instagram post preview in the feed, profile grid, Explore, Reels, and Story reshare views so you can review it before you post.'],
+	['What is the best Instagram post preview ratio?','Instagram displays posts at 1:1 (square), 4:5 (portrait), or 1.91:1 (landscape). Portrait 4:5 uses the most feed space, but every ratio is cropped to a 1:1 square in the profile grid, so keep key subjects and text centered.'],
+	['How do I preview an Instagram post?','Upload your photo or carousel image into the tool above. Preview My Post instantly renders it across the Instagram feed, profile grid, Explore, Reels, and Story reshare views so you can check crop, ratio, and safe zones before publishing — no login or Instagram account connection required.'],
+	['How do I preview a post on Instagram?','Drag a JPG, PNG, or WebP file into the preview tool at the top of this page, or paste one in. It decodes locally in your browser and shows exactly how that post will look across every major Instagram placement in seconds.'],
+	['How do I preview a post on the Instagram grid?','Open the grid view in the tool above to see your upload as a square profile-grid thumbnail. Instagram crops every post to 1:1 for the grid, so use this view to confirm key subjects and text stay inside the visible square. For a full three-column layout check, try the dedicated Instagram grid preview tool.'],
+	['How do I preview an Instagram post before posting?','Before you tap Share, run the image through Preview My Post: upload it once and review the feed, grid, Explore, Reels, and Story previews together, along with safe-zone overlays, so you can catch cropping or legibility issues while the post is still a draft.'],
+	['How can I see a preview of an Instagram post?','Upload an image into the tool above and it renders a real-time Instagram post preview directly in your browser — no login, no server upload, and no Instagram account connection needed.'],
 ];
 const faqSchema = {'@context':'https://schema.org','@type':'FAQPage','mainEntity':faqs.map(([question,answer])=>({'@type':'Question','name':question,'acceptedAnswer':{'@type':'Answer','text':answer}}))};
 ---
@@ -17,9 +24,9 @@ const faqSchema = {'@context':'https://schema.org','@type':'FAQPage','mainEntity
 	<script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 	<div data-landing-before>
 	<section class="hero">
-		<span class="eyebrow">Instagram Preview & Crop Checker</span>
-		<h1>One Upload. Every <span class="accent-text">Instagram View.</span></h1>
-		<p class="hero-copy">Preview your post in the Instagram feed, profile grid, Explore, Reels, and Stories. Catch cropping, safe-zone, thumbnail, and caption issues before publishing.</p>
+		<span class="eyebrow">Free Instagram Post Preview Tool</span>
+		<h1>Instagram Post Preview — <span class="accent-text">Every View, One Upload.</span></h1>
+		<p class="hero-copy">Use this free Instagram post preview app online to see your photo in the feed, profile grid, Explore, Reels, and Stories before you publish. Check the ratio, crop, and caption fold in seconds — no login, no download.</p>
 		<div class="hero-actions">
 			<button class="button button-dark" type="button" data-landing-upload>Upload Files</button>
 			<button class="button button-secondary" type="button" data-landing-example>Try an Example</button>
@@ -33,6 +40,36 @@ const faqSchema = {'@context':'https://schema.org','@type':'FAQPage','mainEntity
 	</div>
 	<div data-landing-after>
 	<AdSlot label="Advertisement — below preview tool" />
+
+	<section class="content-section" id="about-tool">
+		<div class="section-heading">
+			<span class="eyebrow">About the Tool</span>
+			<h2>The Free Instagram Post Preview Tool for Confident Posting</h2>
+			<p>Preview My Post is a free Instagram post preview app that shows exactly how a photo or carousel will look before it goes live. Instead of guessing, upload once and see an accurate Instagram post preview online, covering the feed, the profile grid, Explore, Reels, and Story reshares, right inside your browser.</p>
+		</div>
+		<div class="education-grid">
+			<article>
+				<h2>What Is an Instagram Post Preview App?</h2>
+				<p>An Instagram post preview app is a tool that mimics how a photo, carousel, or Reel cover will actually render across Instagram's surfaces before you tap post. Instagram never shows one image just once — it reframes the same file into a square profile-grid thumbnail, a taller 4:5 feed card, a wide Explore tile, and a vertical Story reshare. A generic image viewer cannot show any of that. Preview My Post is built specifically as an Instagram post preview app free of charge and free of login requirements, so creators, marketers, and small businesses can check placement, cropping, and legibility for every post before it is public, not after.</p>
+			</article>
+			<article>
+				<h2>How to See an Instagram Post Preview Before You Publish</h2>
+				<p>Wondering how to see an Instagram post preview without actually posting first? Upload a JPG, PNG, or WebP file into the tool above. There is no account to connect and nothing to install. Preview My Post decodes the image locally and instantly renders it inside realistic feed, grid, Explore, Reel, and Story frames, complete with safe-zone overlays that mark where interface elements or aggressive cropping tend to clip content. Compare every placement side by side, adjust the source image if something looks tight against an edge, and only publish once every view looks right.</p>
+			</article>
+			<article>
+				<h2>Instagram Post Preview Ratio and Grid Layout</h2>
+				<p>Getting the Instagram post preview ratio right matters because Instagram supports three aspect ratios — 1:1 square, 4:5 portrait, and 1.91:1 landscape — yet every one of them is squeezed into the same square tile inside the profile grid. A tall 4:5 post that looks great in the feed can lose its top and bottom the moment it appears in an Instagram post preview grid view. This tool renders both states from a single upload: the full feed ratio you chose and the cropped square the grid actually shows, plus a three-column grid simulator so you can see how a new post sits beside your existing feed before committing to a ratio.</p>
+			</article>
+			<article>
+				<h2>A Free Instagram Post Preview Generator, No Download Needed</h2>
+				<p>As an Instagram post preview generator, this tool runs entirely online. There is nothing to install, no watermark added, and no account required. Because decoding happens locally in your browser rather than on a server, your photo is never uploaded just to generate a preview, which makes it a genuinely private way to check a launch post, a client review, or a personal profile refresh. Use this Instagram post preview tool online as often as you like, from desktop or mobile, whenever you want a fast, free, and accurate look at a post before it goes live.</p>
+			</article>
+			<article>
+				<h2>Who Uses an Instagram Post Preview Tool</h2>
+				<p>Preview My Post is built for anyone who publishes on Instagram professionally: social media managers checking a client's grid before scheduling, small business owners reviewing product photos, photographers protecting a composition, and creators who want a Reel cover and caption opening to land correctly on the first try. Because the tool runs entirely client-side, teams can also use it on a shared or work computer without connecting a real Instagram account or entering login credentials. Try it above: upload a real image or load the built-in example, switch between placements, and turn on safe zones to see exactly which pixels are protected in every view before the post goes live.</p>
+			</article>
+		</div>
+	</section>
 
 	<section class="content-section">
 		<div class="section-heading"><span class="eyebrow">Placement QA</span><h2>A Preview Tool Built Around What Changes</h2><p>The same creative can feel completely different when it moves from a full feed post to a small discovery thumbnail. Preview My Post puts those differences in one workspace.</p></div>

@@ -8,16 +8,19 @@ interface Props {
 	description: string;
 	canonical?: string;
 	image?: string;
+	imageAlt?: string;
 }
 
 const {
 	title,
 	description,
 	canonical = Astro.url.pathname,
-	image = '/og-preview.svg',
+	image = '/og-preview.png',
+	imageAlt = 'Preview My Post — free Instagram post preview tool showing feed, grid, Explore, Reels, and Story views',
 } = Astro.props;
 const canonicalURL = new URL(canonical, Astro.site);
 const imageURL = new URL(image, Astro.site);
+const imageType = image.endsWith('.svg') ? 'image/svg+xml' : image.endsWith('.png') ? 'image/png' : 'image/jpeg';
 const organization = {
 	'@context': 'https://schema.org',
 	'@type': 'WebApplication',
@@ -43,14 +46,21 @@ const organization = {
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="Preview My Post" />
+		<meta property="og:locale" content="en_US" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonicalURL} />
 		<meta property="og:image" content={imageURL} />
+		<meta property="og:image:secure_url" content={imageURL} />
+		<meta property="og:image:type" content={imageType} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={imageAlt} />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={imageURL} />
+		<meta name="twitter:image:alt" content={imageAlt} />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 		<script is:inline>
