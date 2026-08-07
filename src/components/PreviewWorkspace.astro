@@ -521,7 +521,9 @@ const tabs: { id: PreviewMode; label: string }[] = [
 				button.removeAttribute('aria-busy');
 			}
 		});
-		const setImages = (src:string) => $$<HTMLImageElement>('[data-preview-image]').forEach(img => img.src = src);
+		// Only re-point an image when its source actually changes, so field edits and
+		// ratio changes don't force every placement to re-decode the same picture.
+		const setImages = (src:string) => $$<HTMLImageElement>('[data-preview-image]').forEach(img => { if (img.getAttribute('src') !== src) img.src = src; });
 		const renderCarouselControls = () => {
 			const multiple=objectURLs.length>1;
 			root.dataset.postType=multiple?'carousel':(root.dataset.postType||'post');
@@ -535,6 +537,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 					slide.setAttribute('role','group');
 					slide.setAttribute('aria-label',`Image ${index+1} of ${objectURLs.length}`);
 					const image=document.createElement('img');
+					image.decoding='async';
 					image.src=src;
 					image.dataset.source=src;
 					image.alt=index===0?'Uploaded post feed preview':'';
@@ -1028,6 +1031,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			}
 		});
 		$<HTMLButtonElement>('[data-reset]')?.addEventListener('click',()=>{if(!confirm('Reset all preview fields and settings?'))return;Object.assign(state,defaults,{mode:initial||'all'});localStorage.removeItem('pmp-draft');localStorage.removeItem('pmp-profile-image');gridImageURLs.forEach(url=>{if(url)URL.revokeObjectURL(url);});gridImageURLs=[];$$<HTMLElement>('.grid-placeholder-image').forEach(image=>image.remove());applyProfileImage('');updateGridCellControls();renderFields();setMode(state.mode);emit('tool_reset');});
+		$$<HTMLImageElement>('[data-preview-image]').forEach(img=>img.decoding='async');
 		updateGridCellControls();updateExploreTiles();renderFields();setMode(state.mode);
 		if(initial && initial!=='all')emit('seo_landing_page_used',{page:location.pathname,mode:initial});
 	});

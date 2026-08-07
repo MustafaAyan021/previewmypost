@@ -2091,16 +2091,21 @@ body{
 	width:100%;
 	height:100%;
 	transition:transform .32s cubic-bezier(.22,.75,.22,1);
-	will-change:transform;
 }
+/* Only promote the track to its own GPU layer while it is actually moving,
+   so we are not holding a large composited layer of full-res slides at rest. */
 .feed-carousel-track.dragging{
 	transition:none;
+	will-change:transform;
 }
 .feed-carousel-slide{
 	flex:0 0 100%;
 	width:100%;
 	height:100%;
 	overflow:hidden;
+	/* Skip painting/decoding slides that are clipped out of the frame. */
+	content-visibility:auto;
+	contain-intrinsic-size:auto 100%;
 }
 .feed-carousel-slide img{
 	display:block;
