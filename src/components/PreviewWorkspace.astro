@@ -528,26 +528,42 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			const multiple=objectURLs.length>1;
 			root.dataset.postType=multiple?'carousel':(root.dataset.postType||'post');
 			const feedTrack=$<HTMLElement>('[data-feed-carousel-track]')!;
-			const currentSources=[...feedTrack.querySelectorAll<HTMLImageElement>('img')].map(img=>img.dataset.source);
-			if(currentSources.length!==objectURLs.length||currentSources.some((src,index)=>src!==objectURLs[index])){
+			// Build one empty slide box per image (cheap), keyed by the source list so we only
+			// rebuild when the set of images actually changes.
+			const trackKey=objectURLs.join('|');
+			if(feedTrack.dataset.key!==trackKey){
+				feedTrack.dataset.key=trackKey;
 				feedTrack.innerHTML='';
 				objectURLs.forEach((src,index)=>{
 					const slide=document.createElement('div');
 					slide.className='feed-carousel-slide';
 					slide.setAttribute('role','group');
 					slide.setAttribute('aria-label',`Image ${index+1} of ${objectURLs.length}`);
+					slide.dataset.index=String(index);
+					slide.dataset.source=src;
+					feedTrack.append(slide);
+				});
+			}
+			// Only mount the picture for the active slide and its immediate neighbours, so a
+			// long carousel never keeps every full image decoded in memory at the same time.
+			[...feedTrack.children].forEach((node,index)=>{
+				const slide=node as HTMLElement;
+				const near=Math.abs(index-activeImageIndex)<=1;
+				const existing=slide.querySelector('img');
+				if(near&&!existing){
 					const image=document.createElement('img');
 					image.decoding='async';
-					image.src=src;
-					image.dataset.source=src;
+					image.src=objectURLs[index];
+					image.dataset.source=objectURLs[index];
 					image.alt=index===0?'Uploaded post feed preview':'';
 					image.width=1080;
 					image.height=1350;
 					image.draggable=false;
 					slide.append(image);
-					feedTrack.append(slide);
-				});
-			}
+				}else if(!near&&existing){
+					existing.remove();
+				}
+			});
 			feedTrack.classList.remove('dragging');
 			feedTrack.style.transform=`translate3d(${-activeImageIndex*100}%,0,0)`;
 			const strip=$<HTMLElement>('[data-carousel-strip]')!;
@@ -696,7 +712,37 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null);
 			emit('image_removed',{remaining:objectURLs.length});
 		};
-		const handleFiles = (incoming:File[]|FileList,append=false):boolean => {
+		// Uploads can be many megapixels, but every preview surface shows them at a few
+		// hundred pixels. Decoding the original into ~14 <img> elements is what froze the
+		// carousel, so we downscale each file once to a display bitmap and let all the
+		// surfaces share that light copy. The ORIGINAL pixel size is remembered (via the
+		// dimension cache) so the accuracy report still shows the real resolution.
+		const MAX_DISPLAY_EDGE=1080;
+		const makeDisplayImage=(file:File):Promise<{url:string,w:number,h:number}>=>new Promise((resolve)=>{
+			const probeURL=URL.createObjectURL(file);
+			const img=new Image();
+			img.onload=()=>{
+				const w=img.naturalWidth,h=img.naturalHeight;
+				const scale=Math.min(1,MAX_DISPLAY_EDGE/Math.max(w,h||1));
+				if(scale>=1){ resolve({url:probeURL,w,h}); return; }
+				const cw=Math.max(1,Math.round(w*scale)),ch=Math.max(1,Math.round(h*scale));
+				const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
+				const ctx=canvas.getContext('2d');
+				if(!ctx){ resolve({url:probeURL,w,h}); return; }
+				ctx.drawImage(img,0,0,cw,ch);
+				canvas.toBlob((blob)=>{
+					if(blob){ URL.revokeObjectURL(probeURL); resolve({url:URL.createObjectURL(blob),w,h}); }
+					else resolve({url:probeURL,w,h});
+				},'image/webp',0.9);
+			};
+			img.onerror=()=>resolve({url:probeURL,w:0,h:0});
+			img.src=probeURL;
+		});
+		const addDisplayImages=async(files:File[]):Promise<string[]>=>{
+			const results=await Promise.all(files.map(makeDisplayImage));
+			return results.map(r=>{ if(r.w>0&&r.h>0)dimensionCache.set(r.url,{w:r.w,h:r.h}); return r.url; });
+		};
+		const handleFiles = async (incoming:File[]|FileList,append=false):Promise<boolean> => {
 			const available=append?Math.max(0,10-objectURLs.length):10;
 			const files=[...incoming].slice(0,available);
 			if(!files.length)return false;
@@ -704,15 +750,16 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			if(files.some(file=>file.size>15*1024*1024)){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Each image must be smaller than 15&nbsp;MB.</span>'; return false; }
 			usingExample=false;
 			const replacing=objectURLs.length>0&&!append;
+			const displayURLs=await addDisplayImages(files);
 			if(append){
 				const firstNewIndex=objectURLs.length;
-				objectURLs.push(...files.map(file=>URL.createObjectURL(file)));
+				objectURLs.push(...displayURLs);
 				carouselFiles.push(...files);
 				activeImageIndex=firstNewIndex;
 				useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]);
 			}else{
 				objectURLs.forEach(url=>{if(url.startsWith('blob:'))URL.revokeObjectURL(url);});
-				objectURLs=files.map(file=>URL.createObjectURL(file));
+				objectURLs=displayURLs;
 				carouselFiles=files;
 				activeImageIndex=0;
 				useImage(objectURLs[0],files[0]);
@@ -720,13 +767,13 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			emit(append?'images_added':replacing?'image_replaced':'image_uploaded',{type:files[0].type,count:files.length,size_bucket:files[0].size>5e6?'large':'standard'});
 			return true;
 		};
-		$<HTMLInputElement>('[data-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files&&handleFiles(files))closePanels();});
-		$<HTMLInputElement>('[data-add-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files&&handleFiles(files,true))closePanels();});
+		$<HTMLInputElement>('[data-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files)handleFiles(files).then(ok=>{if(ok)closePanels();});});
+		$<HTMLInputElement>('[data-add-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files)handleFiles(files,true).then(ok=>{if(ok)closePanels();});});
 		const drop=$<HTMLElement>('[data-drop-zone]')!;
 		['dragenter','dragover'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add('dragging')}));
 		['dragleave','drop'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('dragging')}));
-		drop.addEventListener('drop',e=>{if(e.dataTransfer?.files&&handleFiles(e.dataTransfer.files))closePanels();});
-		document.addEventListener('paste',e=>{const files=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/'));if(files.length&&handleFiles(files))closePanels();});
+		drop.addEventListener('drop',e=>{if(e.dataTransfer?.files)handleFiles(e.dataTransfer.files).then(ok=>{if(ok)closePanels();});});
+		document.addEventListener('paste',e=>{const files=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/'));if(files.length)handleFiles(files).then(ok=>{if(ok)closePanels();});});
 		$<HTMLButtonElement>('[data-example]')?.addEventListener('click',()=>{ usingExample=true;objectURLs=['/example-post.svg'];carouselFiles=[null];activeImageIndex=0;useImage(objectURLs[0],null);emit('example_loaded'); });
 		$<HTMLButtonElement>('[data-remove-image]')?.addEventListener('click',()=>{objectURLs.forEach(url=>{if(url.startsWith('blob:'))URL.revokeObjectURL(url);});objectURLs=[];carouselFiles=[];activeImageIndex=0;usingExample=false;$<HTMLElement>('[data-preview-cards]')!.hidden=true;$<HTMLElement>('[data-empty-preview]')!.hidden=false;$<HTMLElement>('[data-report-results]')!.hidden=true;$<HTMLElement>('[data-report-empty]')!.hidden=false;$<HTMLElement>('[data-image-actions]')!.hidden=true;$<HTMLElement>('[data-carousel-strip]')!.hidden=true;drop.classList.remove('has-image');delete root.dataset.postType;$<HTMLElement>('[data-upload-title]')!.textContent='Drop Your Images Here';$<HTMLElement>('[data-upload-help]')!.textContent='JPG, PNG, or WebP · up to 10 images';});
 		$<HTMLButtonElement>('[data-carousel-previous]')?.addEventListener('click',()=>setActiveImage(activeImageIndex-1));
