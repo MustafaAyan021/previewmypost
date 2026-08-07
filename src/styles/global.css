@@ -1639,7 +1639,9 @@ body{
 @media(max-width:640px){
 	.workspace-shell.is-fullscreen{
 		padding:8px;
-		overflow:auto;
+		overflow-y:auto;
+		overflow-x:hidden;
+		-webkit-overflow-scrolling:touch;
 	}
 	.workspace-shell.is-fullscreen .tool-intro{
 		display:none;
@@ -1648,6 +1650,11 @@ body{
 	.workspace-shell.is-fullscreen .preview-panel{
 		height:auto;
 		min-height:calc(100dvh - 86px);
+	}
+	/* Let the fixed shell own the scroll; a nested canvas scroll traps touch gestures and the page appears stuck. */
+	.workspace-shell.is-fullscreen .previews-canvas{
+		overflow:visible;
+		min-height:0;
 	}
 }
 
