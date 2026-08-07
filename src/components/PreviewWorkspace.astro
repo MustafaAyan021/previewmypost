@@ -48,9 +48,9 @@ const tabs: { id: PreviewMode; label: string }[] = [
 				<button type="button" class="icon-button mobile-close" data-close-panels aria-label="Close Post Setup"><X size={16} aria-hidden="true" /></button>
 			</div>
 			<div class="panel-scroll">
+				<input id="image-upload" name="image-upload" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-image-input multiple />
+				<input id="image-add" name="image-add" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-add-image-input multiple />
 				<div class="upload-zone" data-drop-zone>
-					<input id="image-upload" name="image-upload" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-image-input multiple />
-					<input id="image-add" name="image-add" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-add-image-input multiple />
 					<div class="upload-icon" aria-hidden="true"><Upload size={19} stroke-width={1.7} /></div>
 					<strong data-upload-title>Drop Your Images Here</strong>
 					<span data-upload-help>JPG, PNG, or WebP · up to 10 images</span>
@@ -349,6 +349,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 		let gridImageURLs:string[] = [];
 		let selectedGridCell = -1;
 		let activeImageIndex = 0;
+		let usingExample = false;
 		let profileURL = '';
 		let captionExpanded = false;
 		const $ = <T extends Element>(selector:string) => root.querySelector<T>(selector);
@@ -441,7 +442,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			$$<HTMLButtonElement>('[data-mode]').forEach(tab => { const active = tab.dataset.mode === mode; tab.setAttribute('aria-selected',String(active)); tab.tabIndex = active ? 0 : -1; });
 			const mobile = $<HTMLSelectElement>('[data-mobile-mode]'); if (mobile) mobile.value = mode;
 			$$<HTMLElement>('[data-placement]').forEach(card => card.hidden = mode !== 'all' && card.dataset.placement !== mode);
-			const url = new URL(location.href); if (mode === (initial || 'all')) url.searchParams.delete('view'); else url.searchParams.set('view',mode); history.replaceState({},'',url);
+			const url = new URL(location.href); if (mode === (initial || 'all')) url.searchParams.delete('view'); else url.searchParams.set('view',mode); if (url.href !== location.href) history.replaceState({},'',url);
 			save(); emit('preview_tab_selected',{placement:mode});
 		};
 		const exportTargets:Record<Exclude<Mode,'all'>,string> = {
@@ -652,21 +653,30 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			$<HTMLElement>('[data-upload-title]')!.textContent=file?.name || 'Example post loaded';
 			$<HTMLElement>('[data-upload-help]')!.textContent=`${format.format(w)} × ${format.format(h)} · ${(file?.size ? file.size/1024/1024 : .8).toFixed(1)} MB`;
 			$<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="privacy-dot" aria-hidden="true"></span><span>Processed locally. Your image stays in this browser.</span>';
-			$<HTMLElement>('[data-drop-zone]')!.classList.add('has-image');
+			$<HTMLElement>('[data-drop-zone]')!.classList.toggle('has-image',!usingExample);
 			setMode(state.mode);
 		};
 		const dimensionCache=new Map<string,{w:number,h:number}>();
-		const useImage = (src:string,file:File|null) => {
+		// Heavy part of a switch: re-point every placement preview to `src` and re-run analysis.
+		const applyImage = (src:string,file:File|null) => {
 			const cached=dimensionCache.get(src);
-			if(cached){ setImages(src); analyze({naturalWidth:cached.w,naturalHeight:cached.h} as HTMLImageElement,file); renderCarouselControls(); return; }
+			if(cached){ setImages(src); analyze({naturalWidth:cached.w,naturalHeight:cached.h} as HTMLImageElement,file); return; }
 			const image=new Image();
-			image.onload=()=>{ dimensionCache.set(src,{w:image.naturalWidth,h:image.naturalHeight}); setImages(src); analyze(image,file); renderCarouselControls(); };
+			image.onload=()=>{ dimensionCache.set(src,{w:image.naturalWidth,h:image.naturalHeight}); setImages(src); analyze(image,file); };
 			image.src=src;
+		};
+		const useImage = (src:string,file:File|null) => { applyImage(src,file); renderCarouselControls(); };
+		// Coalesce rapid carousel navigation so the heavy work runs once, after swiping settles.
+		let activeApplyTimer=0;
+		const scheduleActiveApply = () => {
+			window.clearTimeout(activeApplyTimer);
+			activeApplyTimer=window.setTimeout(()=>{ if(objectURLs.length)applyImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null); },120);
 		};
 		const setActiveImage = (index:number) => {
 			if(!objectURLs.length)return;
 			activeImageIndex=Math.max(0,Math.min(objectURLs.length-1,index));
-			useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null);
+			renderCarouselControls();   // instant: slide the feed track + update dots/strip
+			scheduleActiveApply();       // deferred: keeps the tap thread free so modals open immediately
 		};
 		const removeCarouselImage = (index:number) => {
 			if(index<0||index>=objectURLs.length)return;
@@ -683,12 +693,13 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null);
 			emit('image_removed',{remaining:objectURLs.length});
 		};
-		const handleFiles = (incoming:File[]|FileList,append=false) => {
+		const handleFiles = (incoming:File[]|FileList,append=false):boolean => {
 			const available=append?Math.max(0,10-objectURLs.length):10;
 			const files=[...incoming].slice(0,available);
-			if(!files.length)return;
-			if(files.some(file=>!['image/jpeg','image/png','image/webp'].includes(file.type))){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Every image must be JPG, PNG, or WebP.</span>'; return; }
-			if(files.some(file=>file.size>15*1024*1024)){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Each image must be smaller than 15&nbsp;MB.</span>'; return; }
+			if(!files.length)return false;
+			if(files.some(file=>!['image/jpeg','image/png','image/webp'].includes(file.type))){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Every image must be JPG, PNG, or WebP.</span>'; return false; }
+			if(files.some(file=>file.size>15*1024*1024)){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Each image must be smaller than 15&nbsp;MB.</span>'; return false; }
+			usingExample=false;
 			const replacing=objectURLs.length>0&&!append;
 			if(append){
 				const firstNewIndex=objectURLs.length;
@@ -704,16 +715,17 @@ const tabs: { id: PreviewMode; label: string }[] = [
 				useImage(objectURLs[0],files[0]);
 			}
 			emit(append?'images_added':replacing?'image_replaced':'image_uploaded',{type:files[0].type,count:files.length,size_bucket:files[0].size>5e6?'large':'standard'});
+			return true;
 		};
-		$<HTMLInputElement>('[data-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files)handleFiles(files);});
-		$<HTMLInputElement>('[data-add-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files)handleFiles(files,true);});
+		$<HTMLInputElement>('[data-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files&&handleFiles(files))closePanels();});
+		$<HTMLInputElement>('[data-add-image-input]')?.addEventListener('change',e=>{const files=(e.currentTarget as HTMLInputElement).files;if(files&&handleFiles(files,true))closePanels();});
 		const drop=$<HTMLElement>('[data-drop-zone]')!;
 		['dragenter','dragover'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add('dragging')}));
 		['dragleave','drop'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('dragging')}));
-		drop.addEventListener('drop',e=>{if(e.dataTransfer?.files)handleFiles(e.dataTransfer.files);});
-		document.addEventListener('paste',e=>{const files=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/'));if(files.length)handleFiles(files);});
-		$<HTMLButtonElement>('[data-example]')?.addEventListener('click',()=>{ objectURLs=['/example-post.svg'];carouselFiles=[null];activeImageIndex=0;useImage(objectURLs[0],null);emit('example_loaded'); });
-		$<HTMLButtonElement>('[data-remove-image]')?.addEventListener('click',()=>{objectURLs.forEach(url=>{if(url.startsWith('blob:'))URL.revokeObjectURL(url);});objectURLs=[];carouselFiles=[];activeImageIndex=0;$<HTMLElement>('[data-preview-cards]')!.hidden=true;$<HTMLElement>('[data-empty-preview]')!.hidden=false;$<HTMLElement>('[data-report-results]')!.hidden=true;$<HTMLElement>('[data-report-empty]')!.hidden=false;$<HTMLElement>('[data-image-actions]')!.hidden=true;$<HTMLElement>('[data-carousel-strip]')!.hidden=true;drop.classList.remove('has-image');delete root.dataset.postType;$<HTMLElement>('[data-upload-title]')!.textContent='Drop Your Images Here';$<HTMLElement>('[data-upload-help]')!.textContent='JPG, PNG, or WebP · up to 10 images';});
+		drop.addEventListener('drop',e=>{if(e.dataTransfer?.files&&handleFiles(e.dataTransfer.files))closePanels();});
+		document.addEventListener('paste',e=>{const files=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/'));if(files.length&&handleFiles(files))closePanels();});
+		$<HTMLButtonElement>('[data-example]')?.addEventListener('click',()=>{ usingExample=true;objectURLs=['/example-post.svg'];carouselFiles=[null];activeImageIndex=0;useImage(objectURLs[0],null);emit('example_loaded'); });
+		$<HTMLButtonElement>('[data-remove-image]')?.addEventListener('click',()=>{objectURLs.forEach(url=>{if(url.startsWith('blob:'))URL.revokeObjectURL(url);});objectURLs=[];carouselFiles=[];activeImageIndex=0;usingExample=false;$<HTMLElement>('[data-preview-cards]')!.hidden=true;$<HTMLElement>('[data-empty-preview]')!.hidden=false;$<HTMLElement>('[data-report-results]')!.hidden=true;$<HTMLElement>('[data-report-empty]')!.hidden=false;$<HTMLElement>('[data-image-actions]')!.hidden=true;$<HTMLElement>('[data-carousel-strip]')!.hidden=true;drop.classList.remove('has-image');delete root.dataset.postType;$<HTMLElement>('[data-upload-title]')!.textContent='Drop Your Images Here';$<HTMLElement>('[data-upload-help]')!.textContent='JPG, PNG, or WebP · up to 10 images';});
 		$<HTMLButtonElement>('[data-carousel-previous]')?.addEventListener('click',()=>setActiveImage(activeImageIndex-1));
 		$<HTMLButtonElement>('[data-carousel-next]')?.addEventListener('click',()=>setActiveImage(activeImageIndex+1));
 		const feedCarousel=$<HTMLElement>('[data-feed-carousel]');
