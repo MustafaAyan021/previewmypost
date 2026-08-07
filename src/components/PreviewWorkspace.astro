@@ -367,6 +367,12 @@ const tabs: { id: PreviewMode; label: string }[] = [
 		const save = () => {
 			try { localStorage.setItem('pmp-draft', JSON.stringify({username:state.username,name:state.name,location:state.location,caption:state.caption,likes:state.likes,comments:state.comments,date:state.date,verified:state.verified,igTheme:state.igTheme,storyLayout:state.storyLayout,feedRatio:state.feedRatio,feedWidth:state.feedWidth,mode:state.mode,safe:state.safe,safeEverywhere:state.safeEverywhere})); } catch {}
 		};
+		// Coalesce rapid keystroke updates into one paint per frame, and defer the
+		// (synchronous) localStorage write so typing stays smooth on phones.
+		let renderQueued=false;
+		const queueRender=()=>{ if(renderQueued)return; renderQueued=true; requestAnimationFrame(()=>{renderQueued=false;renderFields();}); };
+		let saveTimer=0;
+		const queueSave=()=>{ window.clearTimeout(saveTimer); saveTimer=window.setTimeout(save,300); };
 		const applyProfileImage = (src:string) => {
 			$$<HTMLElement>('.preview-avatar').forEach(el=>{
 				el.textContent=src?'':'SN';
@@ -542,7 +548,9 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			feedTrack.style.transform=`translate3d(${-activeImageIndex*100}%,0,0)`;
 			const strip=$<HTMLElement>('[data-carousel-strip]')!;
 			strip.hidden=!objectURLs.length;
-			strip.innerHTML='';
+			const stripSources=[...strip.querySelectorAll<HTMLImageElement>('.carousel-thumb-button img')].map(img=>img.getAttribute('src'));
+			const stripChanged=stripSources.length!==objectURLs.length||stripSources.some((src,index)=>src!==objectURLs[index]);
+			if(stripChanged){strip.innerHTML='';
 			if(objectURLs.length){
 				objectURLs.forEach((src,index)=>{
 					const item=document.createElement('div');
@@ -581,7 +589,11 @@ const tabs: { id: PreviewMode; label: string }[] = [
 					strip.append(addButton);
 				}
 			}
-			$<HTMLElement>('[data-carousel-dots]')!.innerHTML=objectURLs.map((_,index)=>`<i class="${index===activeImageIndex?'active':''}"></i>`).join('');
+			}
+			strip.querySelectorAll<HTMLButtonElement>('.carousel-thumb-button').forEach((button,index)=>{const active=index===activeImageIndex;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+			const dots=$<HTMLElement>('[data-carousel-dots]')!;
+			if(dots.children.length!==objectURLs.length)dots.innerHTML=objectURLs.map(()=>'<i></i>').join('');
+			[...dots.children].forEach((dot,index)=>dot.classList.toggle('active',index===activeImageIndex));
 			$<HTMLElement>('[data-carousel-count]')!.textContent=multiple?`${activeImageIndex+1}/${objectURLs.length}`:'';
 			$<HTMLElement>('[data-carousel-previous]')?.toggleAttribute('hidden',!multiple||activeImageIndex===0);
 			$<HTMLElement>('[data-carousel-next]')?.toggleAttribute('hidden',!multiple||activeImageIndex===objectURLs.length-1);
@@ -643,7 +655,14 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			$<HTMLElement>('[data-drop-zone]')!.classList.add('has-image');
 			setMode(state.mode);
 		};
-		const useImage = (src:string,file:File|null) => { const image=new Image(); image.onload=()=>{setImages(src);analyze(image,file);renderCarouselControls();}; image.src=src; };
+		const dimensionCache=new Map<string,{w:number,h:number}>();
+		const useImage = (src:string,file:File|null) => {
+			const cached=dimensionCache.get(src);
+			if(cached){ setImages(src); analyze({naturalWidth:cached.w,naturalHeight:cached.h} as HTMLImageElement,file); renderCarouselControls(); return; }
+			const image=new Image();
+			image.onload=()=>{ dimensionCache.set(src,{w:image.naturalWidth,h:image.naturalHeight}); setImages(src); analyze(image,file); renderCarouselControls(); };
+			image.src=src;
+		};
 		const setActiveImage = (index:number) => {
 			if(!objectURLs.length)return;
 			activeImageIndex=Math.max(0,Math.min(objectURLs.length-1,index));
@@ -704,15 +723,21 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			let startX=0;
 			let currentX=0;
 			let startIndex=0;
+			let moveRaf=0;
 			const move=(event:PointerEvent)=>{
 				if(!dragging)return;
 				currentX=event.clientX;
-				const delta=currentX-startX;
-				feedTrack.style.transform=`translate3d(calc(${-startIndex*100}% + ${delta}px),0,0)`;
+				if(moveRaf)return;
+				moveRaf=requestAnimationFrame(()=>{
+					moveRaf=0;
+					const delta=currentX-startX;
+					feedTrack.style.transform=`translate3d(calc(${-startIndex*100}% + ${delta}px),0,0)`;
+				});
 			};
 			const finish=(event:PointerEvent)=>{
 				if(!dragging)return;
 				dragging=false;
+				if(moveRaf){cancelAnimationFrame(moveRaf);moveRaf=0;}
 				feedTrack.classList.remove('dragging');
 				if(feedCarousel.hasPointerCapture(event.pointerId))feedCarousel.releasePointerCapture(event.pointerId);
 				const delta=currentX-startX;
@@ -796,7 +821,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			tile?.querySelector('.grid-placeholder-image')?.remove();
 			updateGridCellControls();
 		}));
-		$$<HTMLInputElement|HTMLTextAreaElement>('[data-field]').forEach(el=>el.addEventListener('input',()=>{const key=el.dataset.field as keyof PreviewState;if(el instanceof HTMLInputElement&&el.type==='checkbox')(state as any)[key]=el.checked;else if(el instanceof HTMLInputElement&&el.type==='number')(state as any)[key]=Number(el.value);else (state as any)[key]=el.value;renderFields();save();if(key==='caption')emit('caption_added',{length_bucket:state.caption.length>500?'long':'short'});}));
+		$$<HTMLInputElement|HTMLTextAreaElement>('[data-field]').forEach(el=>el.addEventListener('input',()=>{const key=el.dataset.field as keyof PreviewState;if(el instanceof HTMLInputElement&&el.type==='checkbox')(state as any)[key]=el.checked;else if(el instanceof HTMLInputElement&&el.type==='number')(state as any)[key]=Number(el.value);else (state as any)[key]=el.value;queueRender();queueSave();if(key==='caption')emit('caption_added',{length_bucket:state.caption.length>500?'long':'short'});}));
 		$$<HTMLInputElement>('[name="ig-theme"]').forEach(el=>el.addEventListener('change',()=>{state.igTheme=el.value as 'light'|'dark';renderFields();save();}));
 		$$<HTMLInputElement>('[name="feed-ratio"]').forEach(el=>el.addEventListener('change',()=>{state.feedRatio=el.value as PreviewState['feedRatio'];renderFields();save();if(objectURLs.length)useImage(objectURLs[activeImageIndex],carouselFiles[activeImageIndex]||null);}));
 		$$<HTMLInputElement>('[name="feed-width"]').forEach(el=>el.addEventListener('change',()=>{state.feedWidth=el.value as PreviewState['feedWidth'];renderFields();save();}));
