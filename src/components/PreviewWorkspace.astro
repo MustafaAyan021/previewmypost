@@ -781,14 +781,33 @@ const tabs: { id: PreviewMode; label: string }[] = [
 		const feedCarousel=$<HTMLElement>('[data-feed-carousel]');
 		const feedTrack=$<HTMLElement>('[data-feed-carousel-track]');
 		if(feedCarousel&&feedTrack){
-			let dragging=false;
+			let tracking=false;   // pointer is down; horizontal intent not yet decided
+			let dragging=false;   // confirmed horizontal swipe
 			let startX=0;
+			let startY=0;
 			let currentX=0;
 			let startIndex=0;
+			let activePointer=-1;
 			let moveRaf=0;
+			const reset=()=>{
+				tracking=false;dragging=false;activePointer=-1;
+				if(moveRaf){cancelAnimationFrame(moveRaf);moveRaf=0;}
+			};
 			const move=(event:PointerEvent)=>{
-				if(!dragging)return;
+				if(!tracking||event.pointerId!==activePointer)return;
 				currentX=event.clientX;
+				if(!dragging){
+					const dx=event.clientX-startX,dy=event.clientY-startY;
+					// Wait for a clear horizontal gesture before hijacking the pointer, so plain
+					// taps and vertical scrolls are left to the browser and never capture it.
+					if(Math.abs(dx)<8||Math.abs(dx)<=Math.abs(dy))return;
+					dragging=true;
+					feedTrack.classList.add('dragging');
+					// Only mouse/pen need explicit capture to keep tracking outside the element.
+					// Touch pointers already have implicit capture; taking it explicitly is what
+					// makes Chrome swallow the next tap on another control, so we skip it here.
+					if(event.pointerType!=='touch'){try{feedCarousel.setPointerCapture(event.pointerId);}catch{}}
+				}
 				if(moveRaf)return;
 				moveRaf=requestAnimationFrame(()=>{
 					moveRaf=0;
@@ -797,23 +816,24 @@ const tabs: { id: PreviewMode; label: string }[] = [
 				});
 			};
 			const finish=(event:PointerEvent)=>{
-				if(!dragging)return;
-				dragging=false;
-				if(moveRaf){cancelAnimationFrame(moveRaf);moveRaf=0;}
-				feedTrack.classList.remove('dragging');
+				if(!tracking||event.pointerId!==activePointer)return;
+				const wasDragging=dragging;
 				if(feedCarousel.hasPointerCapture(event.pointerId))feedCarousel.releasePointerCapture(event.pointerId);
-				const delta=currentX-startX;
-				const threshold=Math.min(72,feedCarousel.clientWidth*.18);
-				if(Math.abs(delta)>threshold)setActiveImage(startIndex+(delta<0?1:-1));
-				else feedTrack.style.transform=`translate3d(${-startIndex*100}%,0,0)`;
+				feedTrack.classList.remove('dragging');
+				if(wasDragging){
+					const delta=currentX-startX;
+					const threshold=Math.min(72,feedCarousel.clientWidth*.18);
+					if(Math.abs(delta)>threshold)setActiveImage(startIndex+(delta<0?1:-1));
+					else feedTrack.style.transform=`translate3d(${-startIndex*100}%,0,0)`;
+				}
+				reset();
 			};
 			feedCarousel.addEventListener('pointerdown',(event)=>{
-				if(objectURLs.length<2||event.button!==0)return;
-				dragging=true;
+				if(objectURLs.length<2||event.button!==0||tracking)return;
+				tracking=true;dragging=false;activePointer=event.pointerId;
 				startX=currentX=event.clientX;
+				startY=event.clientY;
 				startIndex=activeImageIndex;
-				feedTrack.classList.add('dragging');
-				feedCarousel.setPointerCapture(event.pointerId);
 			});
 			feedCarousel.addEventListener('pointermove',move);
 			feedCarousel.addEventListener('pointerup',finish);
