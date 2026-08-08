@@ -2086,6 +2086,40 @@ body{
 .feed-media:active{
 	cursor:grabbing;
 }
+.preview-panel{position:relative}
+.preview-loading{
+	position:absolute;
+	inset:0;
+	z-index:40;
+	display:flex;
+	flex-direction:column;
+	align-items:center;
+	justify-content:center;
+	gap:14px;
+	text-align:center;
+	padding:24px;
+	color:var(--body);
+	font-size:13px;
+	font-weight:600;
+	background:color-mix(in srgb,var(--surface-soft) 82%,transparent);
+	backdrop-filter:blur(2px);
+	-webkit-backdrop-filter:blur(2px);
+}
+.preview-loading[hidden]{display:none}
+.preview-loading p{margin:0}
+.preview-loading-spinner{
+	width:38px;
+	height:38px;
+	border-radius:50%;
+	border:3px solid var(--line);
+	border-top-color:var(--accent);
+	animation:pmp-spin .8s linear infinite;
+}
+@keyframes pmp-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.preview-loading-spinner{animation-duration:1.6s}}
+/* On mobile the preview panel is much taller than the screen, so centring inside it
+   would drop the spinner far below the fold — pin the overlay to the viewport instead. */
+@media(max-width:800px){.preview-loading{position:fixed;z-index:80}}
 .feed-carousel-track{
 	display:flex;
 	width:100%;

@@ -124,6 +124,10 @@ const tabs: { id: PreviewMode; label: string }[] = [
 		</aside>
 
 		<section class="preview-panel" aria-labelledby="workspace-title">
+			<div class="preview-loading" data-preview-loading hidden role="status" aria-live="polite">
+				<div class="preview-loading-spinner" aria-hidden="true"></div>
+				<p>Processing your images…</p>
+			</div>
 			<header class="workspace-heading">
 				<div><div><h2 id="workspace-title">Your Previews</h2><p>Compare crops across Instagram placements</p></div></div>
 				<div class="workspace-actions">
@@ -668,6 +672,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			Object.entries(statuses).forEach(([key,value])=>{ const el=$<HTMLElement>(`[data-status="${key}"]`); if(el){el.textContent=value;el.dataset.tone=value==='Good'?'success':'warning';}});
 			$<HTMLElement>('[data-report-empty]')!.hidden=true; $<HTMLElement>('[data-report-results]')!.hidden=false;
 			$<HTMLElement>('[data-empty-preview]')!.hidden=true; $<HTMLElement>('[data-preview-cards]')!.hidden=false;
+			setPreviewLoading(false);
 			$<HTMLElement>('[data-image-actions]')!.hidden=false;
 			$<HTMLElement>('[data-upload-title]')!.textContent=file?.name || 'Example post loaded';
 			$<HTMLElement>('[data-upload-help]')!.textContent=`${format.format(w)} × ${format.format(h)} · ${(file?.size ? file.size/1024/1024 : .8).toFixed(1)} MB`;
@@ -742,6 +747,13 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			const results=await Promise.all(files.map(makeDisplayImage));
 			return results.map(r=>{ if(r.w>0&&r.h>0)dimensionCache.set(r.url,{w:r.w,h:r.h}); return r.url; });
 		};
+		let previewLoadingTimer=0;
+		const setPreviewLoading=(on:boolean)=>{
+			const el=$<HTMLElement>('[data-preview-loading]'); if(el)el.hidden=!on;
+			window.clearTimeout(previewLoadingTimer);
+			// Safety net: never let the overlay get stuck if an image fails to decode.
+			if(on)previewLoadingTimer=window.setTimeout(()=>{const e=$<HTMLElement>('[data-preview-loading]');if(e)e.hidden=true;},12000);
+		};
 		const handleFiles = async (incoming:File[]|FileList,append=false):Promise<boolean> => {
 			const available=append?Math.max(0,10-objectURLs.length):10;
 			const files=[...incoming].slice(0,available);
@@ -750,6 +762,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			if(files.some(file=>file.size>15*1024*1024)){ $<HTMLElement>('[data-upload-status]')!.innerHTML='<span class="error-dot"></span><span>Each image must be smaller than 15&nbsp;MB.</span>'; return false; }
 			usingExample=false;
 			const replacing=objectURLs.length>0&&!append;
+			setPreviewLoading(true);
 			const displayURLs=await addDisplayImages(files);
 			if(append){
 				const firstNewIndex=objectURLs.length;
@@ -1101,5 +1114,44 @@ const tabs: { id: PreviewMode; label: string }[] = [
 		$$<HTMLImageElement>('[data-preview-image]').forEach(img=>img.decoding='async');
 		updateGridCellControls();updateExploreTiles();renderFields();setMode(state.mode);
 		if(initial && initial!=='all')emit('seo_landing_page_used',{page:location.pathname,mode:initial});
+
+		// Android Chrome sometimes swallows the synthesized `click` on the first clean touch
+		// tap that follows a run of touch gestures (e.g. swiping the carousel), so the button
+		// only responds on the second tap. Rescue it: if a genuine tap lands on a control and
+		// no click follows shortly, dispatch one — with guards so normal taps, drags and real
+		// clicks never double-fire.
+		(()=>{
+			const SEL='button,a[href],label,select,[role="tab"],input';
+			const rescuedAt=new WeakMap<Element,number>();
+			let down:{x:number,y:number,t:number,id:number}|null=null;
+			let pending:{el:Element,x:number,y:number,done:boolean}|null=null;
+			window.addEventListener('pointerdown',(e)=>{ if(e.pointerType==='touch')down={x:e.clientX,y:e.clientY,t:performance.now(),id:e.pointerId}; },true);
+			window.addEventListener('pointerup',(e)=>{
+				if(e.pointerType!=='touch'){pending=null;return;}
+				const di=down; down=null;
+				const isTap=!!di&&di.id===e.pointerId&&Math.abs(e.clientX-di.x)<10&&Math.abs(e.clientY-di.y)<10&&(performance.now()-di.t)<600;
+				const ctrl=e.target instanceof Element?e.target.closest(SEL):null;
+				if(!isTap||!ctrl){pending=null;return;}
+				pending={el:ctrl,x:e.clientX,y:e.clientY,done:false};
+				const rec=pending;
+				setTimeout(()=>{
+					if(rec.done)return; pending=null;
+					const hit=document.elementFromPoint(rec.x,rec.y);
+					const stillThere=!!hit&&(hit===rec.el||rec.el.contains(hit)||(hit instanceof Element&&hit.closest(SEL)===rec.el));
+					if(!stillThere)return;
+					rescuedAt.set(rec.el,performance.now());
+					const ev=new MouseEvent('click',{bubbles:true,cancelable:true,clientX:rec.x,clientY:rec.y});
+					(ev as any).__rescued=true;
+					rec.el.dispatchEvent(ev);
+				},220);
+			},true);
+			window.addEventListener('click',(e)=>{
+				if(pending)pending.done=true;
+				if((e as any).__rescued)return;
+				// drop a duplicate real click that arrives just after we already rescued this control
+				const ctrl=e.target instanceof Element?e.target.closest(SEL):null;
+				if(ctrl){const t=rescuedAt.get(ctrl); if(t!=null&&performance.now()-t<600){e.stopImmediatePropagation();e.preventDefault();rescuedAt.delete(ctrl);}}
+			},true);
+		})();
 	});
 </script>
