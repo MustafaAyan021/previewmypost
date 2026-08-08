@@ -5,10 +5,10 @@ import SafeOverlay from './preview/SafeOverlay.astro';
 import {
 	Bookmark, Ellipsis, Grid3x3, Heart,
 	ImageUp, Info, MessageCircle, Minus, Music2, Play, Plus, RotateCcw,
-	Repeat2,
+	Repeat, Repeat2,
 	Send, ShieldCheck, Upload, X,
 	TriangleAlert,
-	Clapperboard,
+	Clapperboard, SquareUser,
 	Maximize2, Minimize2,
 	SlidersHorizontal, ListChecks,
 	AtSign, Menu, UserPlus,
@@ -166,11 +166,11 @@ const tabs: { id: PreviewMode; label: string }[] = [
 								</div>
 								<span class="carousel-dots" data-carousel-dots aria-hidden="true"></span>
 								<div class="ig-actions">
-									<span><Heart size={18} aria-hidden="true" /><b data-output="likes">1,248</b></span>
-									<span><MessageCircle size={18} aria-hidden="true" /><b data-output="comments">42</b></span>
-									<span><Repeat2 size={18} aria-hidden="true" /><b>16</b></span>
-									<span><Send size={18} aria-hidden="true" /></span>
-									<Bookmark size={18} aria-hidden="true" />
+									<span class="ig-action-like"><Heart size={24} aria-hidden="true" /><b data-output="likes">1,248</b></span>
+									<span><MessageCircle size={24} aria-hidden="true" /><b data-output="comments">42</b></span>
+									<span class="ig-action-repost"><Repeat size={24} aria-hidden="true" /><b>285</b></span>
+									<span><Send size={24} aria-hidden="true" /></span>
+									<Bookmark size={24} aria-hidden="true" />
 								</div>
 								<div class="ig-copy"><p><b data-output="username">studio.north</b> <span data-caption-preview></span> <button type="button" data-caption-toggle>more</button></p><time data-output="date">2 DAYS AGO</time></div>
 							</div>
@@ -203,7 +203,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 									<div><span class="highlight-one">01</span><small>Projects</small></div>
 									<div><span class="highlight-two">02</span><small>Studio</small></div>
 								</div>
-								<div class="ig-profile-tabs"><span class="active"><Grid3x3 size={18} aria-hidden="true" /></span><span><Repeat2 size={18} aria-hidden="true" /></span><span><Clapperboard size={18} aria-hidden="true" /></span></div>
+								<div class="ig-profile-tabs"><span class="active"><Grid3x3 size={20} aria-hidden="true" /></span><span><Clapperboard size={20} aria-hidden="true" /></span><span><SquareUser size={20} aria-hidden="true" /></span></div>
 								<div class="profile-grid" data-profile-grid>
 									{Array.from({length:9}).map((_, i) => <div class:list={['grid-tile', `placeholder-${i+1}`, i === 4 && 'active-upload']} data-grid-position={i} tabindex={i === 4 ? -1 : 0} draggable="true" aria-label={`Move primary post to grid position ${i+1}`}>
 										{i === 4 && <><img data-preview-image alt="Uploaded post in profile grid" width="360" height="480" /><SafeOverlay /></>}
@@ -248,7 +248,6 @@ const tabs: { id: PreviewMode; label: string }[] = [
 											<span><Repeat2 size={19} /><small>627</small></span>
 											<span><Send size={19} /><small>1,142</small></span>
 											<span><Bookmark size={19} /><small>392</small></span>
-											<span class="reel-more-lines" aria-hidden="true"><i></i><i></i></span>
 										</div>
 										<div class="reel-meta">
 											<div><span class="avatar preview-avatar">SN</span><b data-output="username">studio.north</b><button type="button">Follow</button></div>
