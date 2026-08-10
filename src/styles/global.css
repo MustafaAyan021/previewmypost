@@ -483,7 +483,10 @@
 }
 .workspace-toast[data-tone="error"]{
 	border-color:var(--error);
-	background:var(--error-deep);
+	background:var(--error);
+	color:#fff;
+	font-weight:600;
+	box-shadow:0 12px 35px rgba(197,34,34,.35);
 }
 .workspace-toast.visible{
 	opacity:1;
