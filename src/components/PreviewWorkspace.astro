@@ -470,18 +470,40 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			await Promise.all([...target.querySelectorAll<HTMLImageElement>('img')].map(image =>
 				image.complete ? Promise.resolve() : image.decode().catch(()=>undefined)
 			));
-			const blob=await toBlob(target,{
-				cacheBust:true,
+			const options={
+				// NOTE: do NOT enable `cacheBust` — it appends `?t=…` to every image URL,
+				// which produces an invalid reference for the `blob:` object URLs used by
+				// user-uploaded images, so the render fails on those (the bundled example
+				// uses a normal http URL and is unaffected). This was the mobile bug.
 				pixelRatio:Math.min(2,window.devicePixelRatio||1),
 				backgroundColor:getComputedStyle(target).backgroundColor||'#ffffff',
-			});
-			if(!blob)throw new Error(`Could not render ${placement}`);
+			};
+			// Mobile Safari occasionally returns null (or a blank image) on the first
+			// html-to-image pass because embedded images aren't inlined into the clone
+			// yet. Retry a few times, but keep the last real error so genuine failures
+			// (e.g. a tainted canvas) surface instead of a generic message.
+			let blob:Blob|null=null;
+			let lastError:unknown=null;
+			for(let attempt=0;attempt<3;attempt++){
+				try{ blob=await toBlob(target,options); }catch(err){ lastError=err; blob=null; }
+				if(blob&&blob.size>0)break;
+			}
+			if(!blob||!blob.size)throw (lastError instanceof Error?lastError:new Error(`Could not render ${placement}`));
 			return blob;
 		};
-		const saveBlob = (blob:Blob,name:string) => {
+		const saveBlob = async (blob:Blob,name:string) => {
+			// On phones the anchor `download` attribute is ignored, so a blob URL just
+			// opens (or fails) instead of saving. Prefer the native share sheet, which
+			// lets the user save straight to Photos/Files; fall back to a plain download.
+			const file=new File([blob],name,{type:blob.type||'image/png'});
+			if(navigator.canShare?.({files:[file]})){
+				try{ await navigator.share({files:[file]}); return; }
+				catch(err){ if((err as Error)?.name==='AbortError')return; }
+			}
 			const url=URL.createObjectURL(blob);
 			const link=document.createElement('a');
-			link.href=url;link.download=name;document.body.append(link);link.click();link.remove();
+			link.href=url;link.download=name;link.rel='noopener';
+			document.body.append(link);link.click();link.remove();
 			setTimeout(()=>URL.revokeObjectURL(url),1000);
 		};
 		$$<HTMLButtonElement>('[data-download-preview]').forEach(button=>button.addEventListener('click',async()=>{
@@ -491,7 +513,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 			button.disabled=true;
 			button.setAttribute('aria-busy','true');
 			try{
-				saveBlob(await createPreviewBlob(placement),`${exportNames[placement]}.png`);
+				await saveBlob(await createPreviewBlob(placement),`${exportNames[placement]}.png`);
 				emit('preview_downloaded',{placement});
 			}catch(error){
 				console.error(error);
@@ -514,7 +536,7 @@ const tabs: { id: PreviewMode; label: string }[] = [
 				for(const placement of Object.keys(exportTargets) as Exclude<Mode,'all'>[]){
 					zip.file(`${exportNames[placement]}.png`,await createPreviewBlob(placement));
 				}
-				saveBlob(await zip.generateAsync({type:'blob'}),'preview-my-post-all-views.zip');
+				await saveBlob(await zip.generateAsync({type:'blob'}),'preview-my-post-all-views.zip');
 				emit('all_previews_downloaded');
 			}catch(error){
 				console.error(error);
