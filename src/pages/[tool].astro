@@ -8,9 +8,11 @@ interface Props { page: LandingPage }
 const { page } = Astro.props;
 const related = landingPages.filter(item=>item.slug!==page.slug).slice(0,5);
 const faqSchema={'@context':'https://schema.org','@type':'FAQPage','mainEntity':page.faqs.map(f=>({'@type':'Question','name':f.question,'acceptedAnswer':{'@type':'Answer','text':f.answer}}))};
+const breadcrumbs=[{name:'Home',item:'/'},{name:page.h1,item:`/${page.slug}/`}];
 ---
-<Layout title={page.title} description={page.description} canonical={`/${page.slug}`}>
+<Layout title={page.title} description={page.description} canonical={`/${page.slug}/`} breadcrumbs={breadcrumbs}>
 	<script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+	<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span aria-current="page">{page.eyebrow}</span></nav>
 	<section class="landing-hero"><span class="eyebrow">{page.eyebrow}</span><h1>{page.h1}</h1><p>{page.intro}</p></section>
 	<div class="landing-tool"><PreviewWorkspace initialMode={page.mode} /></div>
 	<AdSlot label="Advertisement — below tool" />
@@ -24,6 +26,6 @@ const faqSchema={'@context':'https://schema.org','@type':'FAQPage','mainEntity':
 	<AdSlot label="Advertisement — guide area" />
 	<section class="content-section">
 		<div class="section-heading"><span class="eyebrow">Related Tools</span><h2>Check Another Instagram Placement</h2></div>
-		<nav class="related-links" aria-label="Related Instagram preview tools">{related.map(item=><a href={`/${item.slug}`}>{item.h1}</a>)}</nav>
+		<nav class="related-links" aria-label="Related Instagram preview tools">{related.map(item=><a href={`/${item.slug}`}>{item.navLabel}</a>)}</nav>
 	</section>
 </Layout>

@@ -9,6 +9,7 @@ interface Props {
 	canonical?: string;
 	image?: string;
 	imageAlt?: string;
+	breadcrumbs?: { name: string; item: string }[];
 }
 
 const {
@@ -17,20 +18,64 @@ const {
 	canonical = Astro.url.pathname,
 	image = '/og-preview.png',
 	imageAlt = 'Preview My Post — free Instagram post preview tool showing feed, grid, Explore, Reels, and Story views',
+	breadcrumbs,
 } = Astro.props;
 const canonicalURL = new URL(canonical, Astro.site);
 const imageURL = new URL(image, Astro.site);
 const imageType = image.endsWith('.svg') ? 'image/svg+xml' : image.endsWith('.png') ? 'image/png' : 'image/jpeg';
-const organization = {
-	'@context': 'https://schema.org',
-	'@type': 'WebApplication',
-	name: 'Preview My Post',
-	url: 'https://previewmypost.com',
-	applicationCategory: 'DesignApplication',
-	operatingSystem: 'Any',
-	offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-	description,
-};
+const site = 'https://previewmypost.com';
+const graph: Record<string, unknown>[] = [
+	{
+		'@type': 'Organization',
+		'@id': `${site}/#organization`,
+		name: 'Preview My Post',
+		url: site,
+		logo: { '@type': 'ImageObject', url: `${site}/favicon.svg` },
+	},
+	{
+		'@type': 'WebSite',
+		'@id': `${site}/#website`,
+		url: site,
+		name: 'Preview My Post',
+		description: 'Free Instagram post preview tool',
+		publisher: { '@id': `${site}/#organization` },
+		inLanguage: 'en',
+	},
+	{
+		'@type': ['WebApplication', 'SoftwareApplication'],
+		'@id': `${site}/#app`,
+		name: 'Instagram Post Preview — Preview My Post',
+		url: site,
+		applicationCategory: 'DesignApplication',
+		operatingSystem: 'Any',
+		browserRequirements: 'Requires JavaScript. Runs in any modern browser.',
+		isAccessibleForFree: true,
+		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+		featureList: [
+			'Instagram feed post preview',
+			'Profile grid crop preview',
+			'Explore thumbnail preview',
+			'Reel cover preview',
+			'Story reshare preview',
+			'Caption fold and safe-zone checker',
+		],
+		publisher: { '@id': `${site}/#organization` },
+		description,
+	},
+];
+if (breadcrumbs?.length) {
+	graph.push({
+		'@type': 'BreadcrumbList',
+		'@id': `${canonicalURL.href}#breadcrumb`,
+		itemListElement: breadcrumbs.map((crumb, index) => ({
+			'@type': 'ListItem',
+			position: index + 1,
+			name: crumb.name,
+			item: new URL(crumb.item, Astro.site).href,
+		})),
+	});
+}
+const structuredData = { '@context': 'https://schema.org', '@graph': graph };
 ---
 
 <!doctype html>
@@ -43,6 +88,7 @@ const organization = {
 		<meta name="robots" content="index,follow,max-image-preview:large" />
 		<link rel="canonical" href={canonicalURL} />
 		<link rel="sitemap" href="/sitemap-index.xml" />
+		<link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="Preview My Post" />
@@ -80,7 +126,7 @@ const organization = {
 				} catch {}
 			})();
 		</script>
-		<script is:inline type="application/ld+json" set:html={JSON.stringify(organization)} />
+		<script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
 	</head>
 	<body>
 		<a class="skip-link" href="#main-content">Skip to Main Content</a>
