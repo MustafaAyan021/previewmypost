@@ -35,7 +35,6 @@ export default defineConfig({
 					item.priority = 0.3;
 					item.changefreq = 'yearly';
 				}
-				item.lastmod = new Date().toISOString();
 				return item;
 			},
 		}),
