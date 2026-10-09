@@ -15,7 +15,7 @@ interface Props {
 const {
 	title,
 	description,
-	canonical = Astro.url.pathname,
+	canonical = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`,
 	image = '/og-preview.png',
 	imageAlt = 'Preview My Post — free Instagram post preview tool showing feed, grid, Explore, Reels, and Story views',
 	breadcrumbs,

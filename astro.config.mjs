@@ -14,12 +14,13 @@ const httpsDev =
 
 export default defineConfig({
 	site: 'https://previewmypost.com',
+	trailingSlash: 'always',
 	redirects: {
-		'/instagram-crop-checker': '/#preview-tool',
-		'/instagram-safe-zone-checker': '/#preview-tool',
+		'/instagram-crop-checker/': '/#preview-tool',
+		'/instagram-safe-zone-checker/': '/#preview-tool',
 		// The homepage is the single canonical target for "Instagram Post Preview".
 		// Redirect the duplicate landing page to avoid keyword cannibalization.
-		'/instagram-post-preview': '/',
+		'/instagram-post-preview/': '/',
 	},
 	integrations: [
 		sitemap({
